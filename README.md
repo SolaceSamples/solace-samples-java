@@ -6,8 +6,27 @@ This repository holds code samples for the "Solace PubSub+ Messaging API for Jav
 ## Structure of Samples
 < NEED TO FILL IN>
 
-## How to Run
+## Prerequisites
+This tutorial requires the Solace Java API library. Download the Java API library to your computer from [here]().
+
+## Build the Samples
 < NEED TO FILL IN>
+
+## Running the Samples
+< NEED TO FILL IN>
+
+
+## Contributing
+
+Please read [CONTRIBUTING.md](CONTRIBUTING.md) for details on our code of conduct, and the process for submitting pull requests to us.
+
+## Authors
+
+See the list of [contributors](https://github.com/SolaceSamples/solace-samples-java-new/contributors) who participated in this project.
+
+## License
+
+This project is licensed under the Apache License, Version 2.0. - See the [LICENSE](LICENSE) file for details.
 
 ## Resources
 
