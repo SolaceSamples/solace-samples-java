@@ -33,7 +33,7 @@ Fork the project [on GitHub](https://github.com/SolaceSamples/solace-samples-jav
 locally.
 
 ```sh
-git clone https://github.com/<my-github-repo>/solace-samples-java-new
+git clone https://github.com/<my-github-username>/solace-samples-java-new
 ```
 
 #### Step 2: Branch
