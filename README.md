@@ -4,7 +4,9 @@
 This repository holds code samples for the "Solace PubSub+ Messaging API for Java" 
 
 ## Structure of Samples
-< NEED TO FILL IN>
+There are two types of samples available: 
+1. `howtos/src/main/java/com/solace/patterns` demonstrates how to implement key message exchange patterns using the API. 
+1. `howtos/src/main/java/com/solace/sampler` demonstrates how to use specific features of the API.  
 
 ## Prerequisites
 This tutorial requires the Solace Java API library. Download the Java API library to your computer from [here]().
