@@ -12,13 +12,6 @@ There are two types of samples available:
 ## Prerequisites
 This tutorial requires the Solace Java API library. Download the Java API library to your computer from [here]().
 
-## Build the Samples
-< NEED TO FILL IN>
-
-## Running the Samples
-< NEED TO FILL IN>
-
-
 ## Contributing
 
 Please read [CONTRIBUTING.md](CONTRIBUTING.md) for details on our code of conduct, and the process for submitting pull requests to us.
