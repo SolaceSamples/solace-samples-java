@@ -1,7 +1,8 @@
 # solace-samples-java-new
 
 ## Overview
-This repository holds code samples for the "Solace PubSub+ Messaging API for Java" 
+This repository holds code samples for the "Solace PubSub+ Messaging API for Java"  
+*Note that this API is currently in Early Access*
 
 ## Structure of Samples
 There are two types of samples available: 
