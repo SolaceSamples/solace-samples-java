@@ -1,0 +1,121 @@
+plugins {
+    id 'java'
+    id 'application'
+    id 'idea'
+    id 'eclipse'
+//    id 'checkstyle'
+}
+
+// Don't need these tasks, so disabling them. Makes it possible to avoid
+// declaring a single application main class.
+startScripts.enabled = false
+run.enabled = false
+
+// Also don't need the regular application distribution packages since
+// this is just a set of samples. So disabling to make the build output
+// cleaner
+distTar.enabled=false
+distZip.enabled=false
+
+applicationName = 'sol-new-java-samples'
+//version = ''
+
+jar {
+    archiveBaseName = 'sol-new-java-samples'
+    archiveVersion = ''
+    manifest {
+        attributes 'Implementation-Title': 'Solace New Java Getting Started Samples',
+                   'Implementation-Version': ''
+    }
+}
+
+// Download context sensitive help and/or source code for eclipse and idea
+eclipse {
+    classpath {
+        downloadJavadoc = true
+        downloadSources = true
+    }
+    jdt {
+        //if you want to alter the java versions (by default they are configured with gradle java plugin settings):
+        sourceCompatibility = 1.8
+        targetCompatibility = 1.8
+    }
+}
+
+idea {
+    module {
+        downloadJavadoc = true
+        downloadSources = true
+    }
+}
+
+repositories {
+    mavenCentral()
+    jcenter()
+    flatDir {      // temporary until new API is moved to central repo
+        dirs 'lib'  // create a 'lib' folder and copy all required JARs in
+    }
+}
+
+dependencies {
+    // Solace Messaging API for Java Dependencies
+    //implementation group: 'com.solacesystems', name: 'sol-jcsmp', version: '10.10.0'
+
+    implementation fileTree(dir: 'lib', include: '*.jar')
+
+
+    // new an improved logging framework, no more slf4j
+    implementation group: 'org.apache.logging.log4j', name: 'log4j-api', version: '2.11.1'
+    implementation group: 'org.apache.logging.log4j', name: 'log4j-core', version: '2.11.1'
+    implementation group: 'org.apache.logging.log4j', name: 'log4j-jcl', version: '2.11.1'
+
+
+
+    // might need this?  JSON API dependency
+    testImplementation group: 'org.glassfish', name: 'javax.json', version: '1.1.4'
+}
+
+
+sourceSets {
+    main {
+        java {
+            srcDir 'src/main/java'
+            exclude '**/Blah.java'
+       }
+   }
+}
+
+//checkstyle {
+//    configFile file('config/checkstyle/checkstyle.xml');
+//    toolVersion '8.27';
+//}
+
+
+tasks.withType(JavaCompile).all {
+    options.compilerArgs.add("-Xlint:all")
+}
+
+def scripts = [
+    'DirectProcessor':'com.solace.patterns.DirectProcessor'
+]
+scripts.each() { scriptName, className ->
+    def t = tasks.create(name: scriptName+'StartScript', type: CreateStartScripts) {
+        mainClassName = className
+        applicationName = scriptName
+        outputDir = new File(project.buildDir, 'scripts')
+        classpath = jar.outputs.files + project.configurations.runtimeClasspath
+        defaultJvmOpts = ['-ea']
+    }
+    applicationDistribution.into("bin") {
+        from(t)
+        fileMode = 0755
+        duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    }
+    //createAllStartScripts.dependsOn(t)
+}
+
+installDist {
+    destinationDir = new File(project.buildDir, 'staged')
+}
+
+assemble.dependsOn installDist
