@@ -80,7 +80,7 @@ sourceSets {
     main {
         java {
             srcDir 'src/main/java'
-            exclude '**/Blah.java'
+            exclude '**/HowToUseCachedMessageSubscriptions.java'
        }
    }
 }

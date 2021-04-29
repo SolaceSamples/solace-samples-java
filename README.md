@@ -12,6 +12,24 @@ There are two types of samples available:
 ## Prerequisites
 This tutorial requires the Solace Java API library. Download the Java API library to your computer from [here](https://solace.community/discussion/643/early-access-now-available-for-the-new-java-messaging-api).
 
+**Place all JARs downloaded inside the `lib` folder so that Gradle can build.  This is temporary until all required JARs are in central repository.**
+
+## Building
+
+```
+./gradlew clean assemble
+cd build/staged
+./bin/DirectProcessor
+```
+
+### Import into Eclispe
+
+```
+./gradlew eclipse
+```
+Then import as Existing Gradle Project.
+
+
 ## Contributing
 
 Please read [CONTRIBUTING.md](CONTRIBUTING.md) for details on our code of conduct, and the process for submitting pull requests to us.
