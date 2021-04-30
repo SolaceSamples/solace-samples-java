@@ -42,8 +42,8 @@ import java.util.concurrent.Executors;
 public class DirectPublisher {
     
     private static final String SAMPLE_NAME = DirectPublisher.class.getSimpleName();
-    private static final String TOPIC_PREFIX = "solace/samples";  // used as the topic "root"
-    private static final int APPROX_MSG_RATE_PER_SEC = 1;
+    private static final String TOPIC_PREFIX = "solace/samples/";  // used as the topic "root"
+    private static final int APPROX_MSG_RATE_PER_SEC = 100;
     private static final int PAYLOAD_SIZE = 100;
     
     private static volatile int msgSentCounter = 0;                   // num messages sent
@@ -65,8 +65,8 @@ public class DirectPublisher {
             properties.setProperty(AuthenticationProperties.SCHEME_BASIC_PASSWORD, args[3]);  // client-password
         }
         //properties.setProperty(JCSMPProperties.GENERATE_SEQUENCE_NUMBERS, true);  // not required, but interesting
-        properties.setProperty(TransportLayerProperties.RECONNECTION_ATTEMPTS, "1");  // best practices
-        properties.setProperty(TransportLayerProperties.CONNECTION_RETRIES_PER_HOST, "2");
+        properties.setProperty(TransportLayerProperties.RECONNECTION_ATTEMPTS, "20");  // recommended settings
+        properties.setProperty(TransportLayerProperties.CONNECTION_RETRIES_PER_HOST, "5");
         // https://docs.solace.com/Solace-PubSub-Messaging-APIs/API-Developer-Guide/Configuring-Connection-T.htm
         
         final MessagingService messagingService = MessagingService.builder(ConfigurationProfile.V1)
@@ -84,17 +84,17 @@ public class DirectPublisher {
             System.out.println("### RECONNECTED: "+serviceEvent);
         });
         
+        // build the publisher object
         final DirectMessagePublisher publisher = messagingService.createDirectMessagePublisherBuilder()
                 .onBackPressureWait(1)
                 .build();
+        publisher.start();
         
         // can be called for ACL violations, 
         publisher.setPublishFailureListener(e -> {
             System.out.println("### FAILED PUBLISH "+e);
         });
         
-        publisher.start();
-
         ExecutorService publishExecutor = Executors.newSingleThreadExecutor();
         publishExecutor.submit(() -> {  // create an application thread for publishing in a loop
             byte[] payload = new byte[PAYLOAD_SIZE];  // preallocate memory, for reuse, for performance
@@ -105,9 +105,9 @@ public class DirectPublisher {
                     char chosenCharacter = (char)(Math.round(msgSentCounter % 26) + 65);  // rotate through letters [A-Z]
                     Arrays.fill(payload,(byte)chosenCharacter);  // fill the payload completely with that char
                     messageBuilder.withProperty(MessageProperties.APPLICATION_MESSAGE_ID, UUID.randomUUID().toString());  // as an example of a header
-                    OutboundMessage message = messageBuilder.build(payload);
+                    OutboundMessage message = messageBuilder.build(payload);  // binary payload message
                     // dynamic topics!!
-                    String topicString = new StringBuilder(TOPIC_PREFIX).append("/direct/pub/").append(chosenCharacter).toString();
+                    String topicString = new StringBuilder(TOPIC_PREFIX).append("java/direct/pub/").append(chosenCharacter).toString();
                     publisher.publish(message,Topic.of(topicString));  // send the message
                     msgSentCounter++;  // add one
                 } catch (RuntimeException e) {  // threw from send(), only thing that is throwing here, but keep trying (unless shutdown?)
@@ -115,8 +115,8 @@ public class DirectPublisher {
                     isShutdown = true;
                 } finally {
                     try {
-                        Thread.sleep(0);
-                        //Thread.sleep(1000 / APPROX_MSG_RATE_PER_SEC);  // do Thread.sleep(0) for max speed
+                        //Thread.sleep(0);
+                        Thread.sleep(1000 / APPROX_MSG_RATE_PER_SEC);  // do Thread.sleep(0) for max speed
                         // Note: STANDARD Edition Solace PubSub+ broker is limited to 10k msg/s max ingress
                     } catch (InterruptedException e) {
                         isShutdown = true;

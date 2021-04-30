@@ -43,10 +43,10 @@ import java.util.Properties;
 public class HelloWorld {
     
     private static final String SAMPLE_NAME = HelloWorld.class.getSimpleName();
-    private static final String TOPIC_PREFIX = "samples";  // used as the topic "root"
+    private static final String TOPIC_PREFIX = "solace/samples/";  // used as the topic "root"
     private static volatile boolean isShutdown = false;           // are we done yet?
 
-    /** Simple application for doing pubsub. */
+    /** Simple application for doing pub/sub. */
     public static void main(String... args) throws IOException {
         if (args.length < 3) {  // Check command line arguments
             System.out.printf("Usage: %s <host:port> <message-vpn> <client-username> [password]%n%n", SAMPLE_NAME);
@@ -79,7 +79,7 @@ public class HelloWorld {
         
         // create and start the subscriber
         final DirectMessageReceiver receiver = messagingService.createDirectMessageReceiverBuilder()
-                .withSubscriptions(TopicSubscription.of(TOPIC_PREFIX+"/*/hello/>")).build().start();
+                .withSubscriptions(TopicSubscription.of(TOPIC_PREFIX + "*/hello/>")).build().start();
         final MessageHandler messageHandler = (inboundMessage) -> {
             System.out.printf("vvv RECEIVED A MESSAGE vvv%n TOPIC:   %s%n PAYLOAD: %s%n===%n",
                 inboundMessage.getDestinationName(), inboundMessage.getPayloadAsString());
@@ -97,7 +97,7 @@ public class HelloWorld {
                 // payload is our "hello world" message from you!
                 OutboundMessage message = messageBuilder.build(String.format("Hello World from %s!",uniqueName));
                 // make a dynamic topic: solace/samples/hello/[uniqueName]
-                String topicString = String.format("%s/java/hello/%s", TOPIC_PREFIX, uniqueName.toLowerCase());
+                String topicString = TOPIC_PREFIX + "java/hello/" + uniqueName.toLowerCase();
                 System.out.printf(">> Calling send() on %s%n",topicString);
                 publisher.publish(message, Topic.of(topicString));
             } catch (RuntimeException e) {

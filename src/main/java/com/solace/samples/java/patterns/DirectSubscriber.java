@@ -32,12 +32,12 @@ import java.io.IOException;
 import java.util.Properties;
 
 /**
- * A more performant sample that shows an application that publishes.
+ * A more performant sample that shows an application that subscribes.
  */
 public class DirectSubscriber {
     
     private static final String SAMPLE_NAME = DirectSubscriber.class.getSimpleName();
-    private static final String TOPIC_PREFIX = "solace/samples";  // used as the topic "root"
+    private static final String TOPIC_PREFIX = "solace/samples/";  // used as the topic "root"
     
     private static volatile int msgRecvCounter = 0;                   // num messages sent
     private static volatile boolean hasDetectedDiscard = false;  // detected any discards yet?
@@ -59,8 +59,8 @@ public class DirectSubscriber {
             properties.setProperty(AuthenticationProperties.SCHEME_BASIC_PASSWORD, args[3]);  // client-password
         }
         properties.setProperty(ReceiverProperties.DIRECT_SUBSCRIPTION_REAPPLY, "true");  // subscribe Direct subs after reconnect
-        properties.setProperty(TransportLayerProperties.RECONNECTION_ATTEMPTS, "1");  // best practices
-        properties.setProperty(TransportLayerProperties.CONNECTION_RETRIES_PER_HOST, "2");
+        properties.setProperty(TransportLayerProperties.RECONNECTION_ATTEMPTS, "20");  // recommended settings
+        properties.setProperty(TransportLayerProperties.CONNECTION_RETRIES_PER_HOST, "5");
         // https://docs.solace.com/Solace-PubSub-Messaging-APIs/API-Developer-Guide/Configuring-Connection-T.htm
         
         final MessagingService messagingService = MessagingService.builder(ConfigurationProfile.V1)
@@ -78,9 +78,10 @@ public class DirectSubscriber {
             System.out.println("### RECONNECTED: "+serviceEvent);
         });
 
+        // build the Direct receiver object
         final DirectMessageReceiver receiver = messagingService.createDirectMessageReceiverBuilder()
-                .withSubscriptions(TopicSubscription.of(TOPIC_PREFIX+"/direct/>"))
-                .withSubscriptions(TopicSubscription.of(TOPIC_PREFIX+"/control/>"))
+                .withSubscriptions(TopicSubscription.of(TOPIC_PREFIX + "*/direct/>"))
+                .withSubscriptions(TopicSubscription.of(TOPIC_PREFIX + "*/control/>"))
                 .build();
         receiver.start();
         

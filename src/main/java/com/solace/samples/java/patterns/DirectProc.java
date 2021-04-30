@@ -20,7 +20,7 @@ import com.solace.messaging.receiver.MessageReceiver.MessageHandler;
 import com.solace.messaging.resources.Topic;
 import com.solace.messaging.resources.TopicSubscription;
 
-public class DirectProcessor {
+public class DirectProc {
 
 	public static void main(String args[]) throws IOException {
 
@@ -79,7 +79,7 @@ public class DirectProcessor {
 		receiver.receiveAsync(messageHandler);
 
 		// Wait for user to quit
-		System.out.println(DirectProcessor.class.getSimpleName() + " connected, and running. Press [ENTER] to quit.");
+		System.out.println(DirectProc.class.getSimpleName() + " connected, and running. Press [ENTER] to quit.");
 		Scanner input = new Scanner(System.in);
 		System.out.print("Press Enter to quit...");
 		input.nextLine();
