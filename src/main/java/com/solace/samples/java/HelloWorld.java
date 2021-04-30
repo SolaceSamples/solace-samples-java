@@ -43,7 +43,7 @@ import java.util.Properties;
 public class HelloWorld {
     
     private static final String SAMPLE_NAME = HelloWorld.class.getSimpleName();
-    private static final String TOPIC_PREFIX = "solace/samples";  // used as the topic "root"
+    private static final String TOPIC_PREFIX = "samples";  // used as the topic "root"
     private static volatile boolean isShutdown = false;           // are we done yet?
 
     /** Simple application for doing pubsub. */
@@ -79,7 +79,7 @@ public class HelloWorld {
         
         // create and start the subscriber
         final DirectMessageReceiver receiver = messagingService.createDirectMessageReceiverBuilder()
-                .withSubscriptions(TopicSubscription.of(TOPIC_PREFIX+"/hello/>")).build().start();
+                .withSubscriptions(TopicSubscription.of(TOPIC_PREFIX+"/*/hello/>")).build().start();
         final MessageHandler messageHandler = (inboundMessage) -> {
             System.out.printf("vvv RECEIVED A MESSAGE vvv%n TOPIC:   %s%n PAYLOAD: %s%n===%n",
                 inboundMessage.getDestinationName(), inboundMessage.getPayloadAsString());
@@ -88,7 +88,7 @@ public class HelloWorld {
         receiver.receiveAsync(messageHandler);
         
         System.out.printf("%nConnected and subscribed. Ready to publish. Press [ENTER] to quit.%n");
-        System.out.printf(" - Run this sample twice to see true publish-subscribe. -%n%n");
+        System.out.printf(" ~ Run this sample twice splitscreen to see true publish-subscribe. ~%n%n");
 
         while (System.in.available() == 0 && !isShutdown) {  // loop now, just use main thread
             try {
@@ -97,7 +97,7 @@ public class HelloWorld {
                 // payload is our "hello world" message from you!
                 OutboundMessage message = messageBuilder.build(String.format("Hello World from %s!",uniqueName));
                 // make a dynamic topic: solace/samples/hello/[uniqueName]
-                String topicString = String.format("%s/hello/%s", TOPIC_PREFIX, uniqueName.toLowerCase());
+                String topicString = String.format("%s/java/hello/%s", TOPIC_PREFIX, uniqueName.toLowerCase());
                 System.out.printf(">> Calling send() on %s%n",topicString);
                 publisher.publish(message, Topic.of(topicString));
             } catch (RuntimeException e) {
