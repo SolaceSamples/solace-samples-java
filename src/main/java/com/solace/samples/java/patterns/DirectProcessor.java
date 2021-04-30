@@ -19,29 +19,38 @@
 
 package com.solace.samples.java.patterns;
 
+
 import com.solace.messaging.MessagingService;
 import com.solace.messaging.config.SolaceProperties.AuthenticationProperties;
+import com.solace.messaging.config.SolaceProperties.MessageProperties;
 import com.solace.messaging.config.SolaceProperties.ReceiverProperties;
 import com.solace.messaging.config.SolaceProperties.ServiceProperties;
 import com.solace.messaging.config.SolaceProperties.TransportLayerProperties;
 import com.solace.messaging.config.profile.ConfigurationProfile;
+import com.solace.messaging.publisher.DirectMessagePublisher;
+import com.solace.messaging.publisher.OutboundMessage;
+import com.solace.messaging.publisher.OutboundMessageBuilder;
 import com.solace.messaging.receiver.DirectMessageReceiver;
 import com.solace.messaging.receiver.MessageReceiver.MessageHandler;
+import com.solace.messaging.resources.Topic;
 import com.solace.messaging.resources.TopicSubscription;
 import java.io.IOException;
+import java.nio.charset.Charset;
 import java.util.Properties;
 
 /**
- * A more performant sample that shows an application that subscribes.
+ * A Processor is a microservice or application that receives a message, does something with the info,
+ * and then sends it on..!  It is both a publisher and a subscriber, but (mainly) publishes data once
+ * it has received an input message.
+ * This class is meant to be used with DirectPub and DirectSub, intercepting the published messages and
+ * sending them on to a different topic.
  */
-public class DirectSubscriber {
-    
-    private static final String SAMPLE_NAME = DirectSubscriber.class.getSimpleName();
+public class DirectProcessor {
+
+    private static final String SAMPLE_NAME = DirectProcessor.class.getSimpleName();
     private static final String TOPIC_PREFIX = "solace/samples/";  // used as the topic "root"
     
-    private static volatile int msgRecvCounter = 0;                   // num messages sent
-    private static volatile boolean hasDetectedDiscard = false;  // detected any discards yet?
-    private static volatile boolean isShutdown = false;          // are we done yet?
+    private static volatile boolean isShutdown = false;  // are we done yet?
 
     /** Main method. */
     public static void main(String... args) throws IOException {
@@ -58,6 +67,7 @@ public class DirectSubscriber {
         if (args.length > 3) {
             properties.setProperty(AuthenticationProperties.SCHEME_BASIC_PASSWORD, args[3]);  // client-password
         }
+        //properties.setProperty(JCSMPProperties.GENERATE_SEQUENCE_NUMBERS, true);  // not required, but interesting
         properties.setProperty(ReceiverProperties.DIRECT_SUBSCRIPTION_REAPPLY, "true");  // subscribe Direct subs after reconnect
         properties.setProperty(TransportLayerProperties.RECONNECTION_ATTEMPTS, "20");  // recommended settings
         properties.setProperty(TransportLayerProperties.CONNECTION_RETRIES_PER_HOST, "5");
@@ -66,10 +76,10 @@ public class DirectSubscriber {
         final MessagingService messagingService = MessagingService.builder(ConfigurationProfile.V1)
                 .fromProperties(properties)
                 .build();
-        messagingService.connect();  // blocking connect to the broker
+        messagingService.connect();  // blocking connect
         messagingService.addServiceInterruptionListener(serviceEvent -> {
             System.out.println("### SERVICE INTERRUPTION: "+serviceEvent.getCause());
-            isShutdown = true;
+            //isShutdown = true;
         });
         messagingService.addReconnectionAttemptListener(serviceEvent -> {
             System.out.println("### RECONNECTING ATTEMPT: "+serviceEvent);
@@ -78,54 +88,56 @@ public class DirectSubscriber {
             System.out.println("### RECONNECTED: "+serviceEvent);
         });
 
+        // build the publisher object
+        final DirectMessagePublisher publisher = messagingService.createDirectMessagePublisherBuilder()
+                .onBackPressureWait(1)
+                .build();
+        publisher.start();
+        
         // build the Direct receiver object
         final DirectMessageReceiver receiver = messagingService.createDirectMessageReceiverBuilder()
-                .withSubscriptions(TopicSubscription.of(TOPIC_PREFIX + "*/direct/>"))
-                .withSubscriptions(TopicSubscription.of(TOPIC_PREFIX + "control/>"))
+                .withSubscriptions(TopicSubscription.of(TOPIC_PREFIX+"*/direct/pub/>"))
+                .withSubscriptions(TopicSubscription.of(TOPIC_PREFIX+"control/>"))
                 .build();
         receiver.start();
         
-        receiver.setReceiverFailureListener(failedReceiveEvent -> {
-            System.out.println("### FAILED RECEIVE EVENT " + failedReceiveEvent);
-        });
+        OutboundMessageBuilder messageBuilder = messagingService.messageBuilder();
 
-        final MessageHandler messageHandler = (inboundMessage) -> {
-            // do not print anything to console... too slow!
-            msgRecvCounter++;
-            // since Direct messages, check if there have been any lost any messages
-            if (inboundMessage.getMessageDiscardNotification().hasBrokerDiscardIndication() ||
-                    inboundMessage.getMessageDiscardNotification().hasInternalDiscardIndication()) {
-                // If the consumer is being over-driven (i.e. publish rates too high), the broker might discard some messages for this consumer
-                // check this flag to know if that's happened
-                // to avoid discards:
-                //  a) reduce publish rate
-                //  b) use multiple-threads or shared subscriptions for parallel processing
-                //  c) increase size of consumer's D-1 egress buffers (check client-profile) (helps more with bursts)
-                hasDetectedDiscard = true;  // set my own flag
-            }
-            if (inboundMessage.getDestinationName().endsWith("control/quit")) {  // special sample message
-                System.out.println("QUIT message received, shutting down.");  // example of command-and-control w/msgs
+        final MessageHandler messageHandler = (inboundMsg) -> {
+            String inboundTopic = inboundMsg.getDestinationName();
+            if (inboundTopic.matches(TOPIC_PREFIX + ".+?/direct/pub/.*")) {  // use of regex to match variable API level
+                // how to "process" the incoming message? maybe do a DB lookup? add some additional properties? or change the payload?
+                final String upperCaseMessage = inboundTopic.toUpperCase();  // as a silly example of "processing"
+                
+                if (inboundMsg.getApplicationMessageId() != null) {  // populate for traceability
+                    messageBuilder.withProperty(MessageProperties.APPLICATION_MESSAGE_ID, inboundMsg.getApplicationMessageId());
+                }
+                OutboundMessage outboundMsg = messageBuilder.build(upperCaseMessage);  // build TextMessage to send
+                String [] inboundTopicLevels = inboundTopic.split("/",6);
+                String outboundTopic = new StringBuilder(TOPIC_PREFIX).append("java/direct/upper/").append(inboundTopicLevels[5]).toString();
+                try {
+                    publisher.publish(outboundMsg, Topic.of(outboundTopic));
+                } catch (RuntimeException e) {  // threw from send(), only thing that is throwing here, but keep trying (unless shutdown?)
+                    System.out.printf("### Caught while trying to publisher.publish(): %s%n",e);
+                    isShutdown = true;
+                }
+            } else if (inboundMsg.getDestinationName().endsWith("control/quit")) {  // special sample message
+                System.out.println(">>> QUIT message received, shutting down.");  // example of command-and-control w/msgs
                 isShutdown = true;
             }
         };
         receiver.receiveAsync(messageHandler);
 
         System.out.println(SAMPLE_NAME + " connected, and running. Press [ENTER] to quit.");
-        try {
-            while (System.in.available() == 0 && !isShutdown) {
-                Thread.sleep(1000);  // wait 1 second
-                System.out.printf("Received msgs/s: %,d%n",msgRecvCounter);  // simple way of calculating message rates
-                msgRecvCounter = 0;
-                if (hasDetectedDiscard) {
-                    System.out.println("*** Egress discard detected *** : "
-                            + SAMPLE_NAME + " unable to keep up with full message rate");
-                    hasDetectedDiscard = false;  // only show the error once per second
-                }
+        while (System.in.available() == 0 && !isShutdown) {  // time to loop!
+            try {
+                Thread.sleep(1000);  // take a pause
+            } catch (InterruptedException e) {
+                // Thread.sleep() interrupted... probably getting shut down
             }
-        } catch (InterruptedException e) {
-            // Thread.sleep() interrupted... probably getting shut down
         }
         isShutdown = true;
+        publisher.terminate(500);
         receiver.terminate(500);
         messagingService.disconnect();
         System.out.println("Main thread quitting.");
