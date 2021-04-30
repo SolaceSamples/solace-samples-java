@@ -291,6 +291,8 @@ public class HowToConsumeDirectMessage {
    */
   static class MyData implements Serializable {
 
+    private static final long serialVersionUID = 1L;
+    
     private final String name;
 
     MyData(String name) {
