@@ -2,7 +2,7 @@
 
 ## Overview
 This repository holds code samples for the "Solace PubSub+ Messaging API for Java"  
-*Note that this API is currently in Early Access. In order to download the API you need to register for the Solace Dev Community*
+*Note that this API is currently in **Early Access**. In order to download the API you need to register for the Solace Dev Community*
 
 ## Structure of Samples
 There are two types of samples available: 
