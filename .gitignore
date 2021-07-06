@@ -7,8 +7,7 @@ build
 .project
 .settings/
 bin/
-lib/*
+lib/
 
 # Ignore VSCode settings folder
 .vscode/
-
