@@ -21,10 +21,10 @@ applicationName = 'sol-new-java-samples'
 //version = ''
 
 jar {
-    archiveBaseName = 'sol-new-java-samples'
+    archiveBaseName = 'solace-samples-java-new'
     archiveVersion = ''
     manifest {
-        attributes 'Implementation-Title': 'Solace New Java Getting Started Samples',
+        attributes 'Implementation-Title': 'Solace Java Getting Started Samples',
                    'Implementation-Version': ''
     }
 }
@@ -52,16 +52,11 @@ idea {
 repositories {
     mavenCentral()
     jcenter()
-//    flatDir {      // temporary until new API is moved to central repo
-//        dirs 'lib'  // create a 'lib' folder and copy all required JARs in
-//    }
 }
 
 dependencies {
     // Solace Messaging API for Java Dependencies
     implementation group: 'com.solace', name: 'solace-messaging-client', version: '1.0.0'
-
-    //implementation fileTree(dir: 'lib', include: '*.jar')  // temporary
 
     // new an improved logging framework, no more slf4j
     implementation group: 'org.apache.logging.log4j', name: 'log4j-api', version: '2.11.1'
@@ -74,7 +69,6 @@ sourceSets {
     main {
         java {
             srcDir 'src/main/java'
-            exclude '**/HowToUseCachedMessageSubscriptions.java'
        }
    }
 }
