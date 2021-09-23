@@ -11,10 +11,13 @@ import com.solace.messaging.config.profile.ConfigurationProfile;
 import com.solace.messaging.publisher.DirectMessagePublisher;
 import com.solace.messaging.publisher.DirectMessagePublisher.PublishFailureListener;
 import com.solace.messaging.receiver.DirectMessageReceiver;
-import com.solace.messaging.receiver.MessageReceiver.ReceiverFailureListener;
+import com.solace.messaging.receiver.MessageReceiver.ReceiveFailureListener;
 import com.solace.messaging.receiver.PersistentMessageReceiver;
 import com.solace.messaging.resources.Queue;
 
+/**
+ * Sampler for handling of service interruptions and errors
+ */
 public class HowToHandleServiceInterruptionsAndFailures {
 
   /**
@@ -130,10 +133,10 @@ public class HowToHandleServiceInterruptionsAndFailures {
 
     final DirectMessageReceiver messageReceiver = service.createDirectMessageReceiverBuilder()
         .build().start();
-    final ReceiverFailureListener publishFailureListener = (failedPublishEvent) -> {
+    final ReceiveFailureListener publishFailureListener = (failedPublishEvent) -> {
       // process failures on receive using exception and timestamp ...
     };
-    messageReceiver.setReceiverFailureListener(publishFailureListener);
+    messageReceiver.setReceiveFailureListener(publishFailureListener);
   }
 
 }

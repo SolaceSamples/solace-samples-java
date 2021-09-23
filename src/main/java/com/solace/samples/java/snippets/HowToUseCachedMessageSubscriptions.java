@@ -126,7 +126,7 @@ public class HowToUseCachedMessageSubscriptions {
     final TopicSubscription topic = TopicSubscription.of(subscriptionExpression);
 
     final CachedTopicSubscription subscriptionToReceiveCachedFollowedByLiveMessages = CachedTopicSubscription
-        .cachedFirst(cacheName, topic, maxCachedMessages, cachedMessageAge, cacheAccessTimeout,
+        .cachedFirst(cacheName, topic, cacheAccessTimeout, maxCachedMessages, cachedMessageAge,
             ignoreCacheAccessExceptions);
     // adds subscription and performs a solace cache request
     receiver.addSubscription(subscriptionToReceiveCachedFollowedByLiveMessages);

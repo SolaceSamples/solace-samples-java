@@ -16,7 +16,8 @@ import java.util.Properties;
 public class HowToConfigureAuthentication {
 
   /**
-   * setup for basic auth using user name and password
+   * Example how to configure service access to use a basic authentication with user name and
+   * password
    *
    * @param userName user name
    * @param password password
@@ -33,9 +34,10 @@ public class HowToConfigureAuthentication {
   }
 
   /**
-   * Prerequisite for this example to work on a client side is existence of jaas login configuration
-   * file 'jaas.conf' similar to one in 'src/main/resources/' and valid kerberos configuration file
-   * 'krb5.conf'
+  * Example how to configure service access using Kerberos with Jaas login context name
+   * <p>Prerequisite for this example to work on a client side is existence of jaas login
+   * configuration file 'jaas.conf' similar to one in 'src/main/resources/' and valid kerberos
+   * configuration file 'krb5.conf'
    *
    * @param serviceConfiguration service configuration properties
    * @return configured and connected instance of {@code MessagingService} ready to be used for
@@ -103,7 +105,7 @@ public class HowToConfigureAuthentication {
   public static MessagingService configureClientCertificateAuthenticationCustomizeAllSettings(
       String myKeystorePassword, String myKeystoreUrl) {
 
-    return MessagingService.builder(ConfigurationProfile.V1).localSecure(55443)
+    return MessagingService.builder(ConfigurationProfile.V1).localTLS(55443)
         // transport security TLS is REQUIRED
         .withTransportSecurityStrategy(TLS.create())
         // can configure or override authentication manually
@@ -133,7 +135,7 @@ public class HowToConfigureAuthentication {
   public static MessagingService configureClientCertificateAuthenticationCustomizeAllSettings(
       String myKeystorePassword, String myEspecialPrivateKeyPassword, String myKeystoreUrl) {
 
-    return MessagingService.builder(ConfigurationProfile.V1).localSecure(55443)
+    return MessagingService.builder(ConfigurationProfile.V1).localTLS(55443)
         // transport security TLS is REQUIRED
         .withTransportSecurityStrategy(TLS.create())
         // can configure or override authentication manually

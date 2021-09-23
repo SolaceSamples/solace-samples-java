@@ -66,6 +66,16 @@ public class HowToPublishDirectMessage {
   }
 
   /**
+   * Example how to create a topic
+   *
+   * @param topicName topic name/expression
+   * @return topic instanch to be used for publishing purposes
+   */
+  public static Topic createATopic(String topicName) {
+    return Topic.of(topicName);
+  }
+
+  /**
    * Example how to publish direct message with a given byte payload
    *
    * @param service       connected instance of a messaging service, ready to be used

@@ -14,8 +14,7 @@ import java.nio.charset.StandardCharsets;
 public class HowToPublishPersistentMessage {
 
   public static PersistentMessagePublisher createPersistentMessagePublisher(
-      MessagingService service,
-      Topic toDestination) {
+      MessagingService service, Topic toDestination) {
 
     final PersistentMessagePublisher messagePublisher = service
         .createPersistentMessagePublisherBuilder()
@@ -24,9 +23,18 @@ public class HowToPublishPersistentMessage {
     return messagePublisher;
   }
 
+  /**
+   * Example how to create a topic
+   *
+   * @param topicName topic name/expression
+   * @return topic instanch to be used for publishing purposes
+   */
+  public static Topic createATopic(String topicName) {
+    return Topic.of(topicName);
+  }
+
   public static void publishByteMessageNonBlocking(
-      final PersistentMessagePublisher messagePublisher,
-      Topic toDestination) {
+      final PersistentMessagePublisher messagePublisher, Topic toDestination) {
 
     // listener that processes all delivery confirmations/timeouts for all messages all
     // messages being send using given instance of messagePublisher
@@ -44,8 +52,7 @@ public class HowToPublishPersistentMessage {
   }
 
   public static void publishStringMessageNonBlocking(
-      final PersistentMessagePublisher messagePublisher,
-      Topic toDestination) {
+      final PersistentMessagePublisher messagePublisher, Topic toDestination) {
 
     // listener that processes all delivery confirmations/timeouts for all messages all
     // messages being send using given instance of messagePublisher
@@ -64,8 +71,7 @@ public class HowToPublishPersistentMessage {
 
 
   public static void publishTypedMessageNonBlocking(OutboundMessageBuilder messageBuilder,
-      final PersistentMessagePublisher messagePublisher,
-      Topic toDestination) {
+      final PersistentMessagePublisher messagePublisher, Topic toDestination) {
 
     // listener that processes all delivery confirmations/timeouts for all messages all
     // messages being send using given instance of messagePublisher
@@ -96,8 +102,7 @@ public class HowToPublishPersistentMessage {
 
   public static void publishTypedMessageWithExtendedMessagePropertiesNonBlocking(
       OutboundMessageBuilder messageBuilder,
-      final PersistentMessagePublisher messagePublisher,
-      Topic toDestination) {
+      final PersistentMessagePublisher messagePublisher, Topic toDestination) {
 
     // listener that processes all delivery confirmations/timeouts for all messages all
     // messages being send using given instance of messagePublisher
@@ -130,8 +135,7 @@ public class HowToPublishPersistentMessage {
 
   public static void correlateMessageOnBrokerAcknowledgementWithUserContextNonBlocking(
       OutboundMessageBuilder messageBuilder,
-      final PersistentMessagePublisher messagePublisher,
-      Topic toDestination) {
+      final PersistentMessagePublisher messagePublisher, Topic toDestination) {
 
     // listener that processes all delivery confirmations/timeouts for all messages all
     // messages being send using given instance of messagePublisher
@@ -167,8 +171,7 @@ public class HowToPublishPersistentMessage {
   }
 
   public static void checkForMessageAcknowledgementFailuresNonBlocking(
-      final PersistentMessagePublisher messagePublisher,
-      Topic toDestination) {
+      final PersistentMessagePublisher messagePublisher, Topic toDestination) {
 
     // Listener that processes all publish confirmations/timeouts for all messages.
     // Callback expected to be executed on a different thread then message was published on
@@ -201,8 +204,7 @@ public class HowToPublishPersistentMessage {
 
   public static void publishTypedMessageBlockingWaitingForDeliveryConfirmation(
       OutboundMessageBuilder messageBuilder,
-      final PersistentMessagePublisher messagePublisher,
-      Topic toDestination) {
+      final PersistentMessagePublisher messagePublisher, Topic toDestination) {
 
     final MyData data = new MyData("my blocking message");
 

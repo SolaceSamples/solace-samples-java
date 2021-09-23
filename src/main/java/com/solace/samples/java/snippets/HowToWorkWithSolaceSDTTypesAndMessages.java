@@ -6,9 +6,10 @@ import com.solace.messaging.publisher.OutboundMessage;
 import com.solace.messaging.receiver.DirectMessageReceiver;
 import com.solace.messaging.resources.Topic;
 import com.solace.messaging.resources.TopicSubscription;
-import com.solace.messaging.util.internal.MessageToSDTMapConverter;
-import com.solace.messaging.util.internal.SolaceSDTMap;
-import com.solace.messaging.util.internal.SolaceSDTMapToMessageConverter;
+import com.solace.messaging.util.MessageToSDTMapConverter;
+import com.solace.messaging.util.SolaceSDTMap;
+import com.solace.messaging.util.SolaceSDTMapToMessageConverter;
+import com.solacesystems.jcsmp.SDTMap;
 
 public class HowToWorkWithSolaceSDTTypesAndMessages {
 
@@ -47,5 +48,17 @@ public class HowToWorkWithSolaceSDTTypesAndMessages {
         .withPriority(100).build(content, new SolaceSDTMapToMessageConverter());
     return message;
   }
+
+
+  public static SolaceSDTMap createSolaceSDTMap(SDTMap sdtMap, String someString,
+      Integer someInteger) {
+    final SolaceSDTMap map = new SolaceSDTMap();
+    map.putMap("myMapKey123", sdtMap);
+    map.putInteger("myIntegerKey123", someInteger);
+    map.putString("myStringKey123", someString);
+    // many more different types can be added to the SolaceSDTMap
+    return map;
+  }
+
 
 }

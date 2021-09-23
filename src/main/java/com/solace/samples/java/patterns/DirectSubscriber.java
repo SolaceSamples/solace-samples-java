@@ -58,7 +58,7 @@ public class DirectSubscriber {
         if (args.length > 3) {
             properties.setProperty(AuthenticationProperties.SCHEME_BASIC_PASSWORD, args[3]);  // client-password
         }
-        properties.setProperty(ReceiverProperties.DIRECT_SUBSCRIPTION_REAPPLY, "true");  // subscribe Direct subs after reconnect
+        properties.setProperty(ServiceProperties.RECEIVER_DIRECT_SUBSCRIPTION_REAPPLY, "true");  // subscribe Direct subs after reconnect
         properties.setProperty(TransportLayerProperties.RECONNECTION_ATTEMPTS, "20");  // recommended settings
         properties.setProperty(TransportLayerProperties.CONNECTION_RETRIES_PER_HOST, "5");
         // https://docs.solace.com/Solace-PubSub-Messaging-APIs/API-Developer-Guide/Configuring-Connection-T.htm
@@ -85,7 +85,7 @@ public class DirectSubscriber {
                 .build();
         receiver.start();
         
-        receiver.setReceiverFailureListener(failedReceiveEvent -> {
+        receiver.setReceiveFailureListener(failedReceiveEvent -> {
             System.out.println("### FAILED RECEIVE EVENT " + failedReceiveEvent);
         });
 

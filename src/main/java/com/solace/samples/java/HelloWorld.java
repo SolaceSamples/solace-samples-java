@@ -20,6 +20,7 @@
 package com.solace.samples.java;
 
 import com.solace.messaging.MessagingService;
+import com.solace.messaging.config.SolaceProperties;
 import com.solace.messaging.config.SolaceProperties.AuthenticationProperties;
 import com.solace.messaging.config.SolaceProperties.ReceiverProperties;
 import com.solace.messaging.config.SolaceProperties.ServiceProperties;
@@ -68,8 +69,8 @@ public class HelloWorld {
         if (args.length > 3) {
             properties.setProperty(AuthenticationProperties.SCHEME_BASIC_PASSWORD, args[3]);  // client-password
         }
-        properties.setProperty(ReceiverProperties.DIRECT_SUBSCRIPTION_REAPPLY, "true");  // subscribe Direct subs after reconnect
-        
+        properties.setProperty(ServiceProperties.RECEIVER_DIRECT_SUBSCRIPTION_REAPPLY, "true");  // subscribe Direct subs after reconnect
+
         final MessagingService messagingService = MessagingService.builder(ConfigurationProfile.V1)
                 .fromProperties(properties).build().connect();  // blocking connect to the broker
 
@@ -81,9 +82,7 @@ public class HelloWorld {
         final DirectMessageReceiver receiver = messagingService.createDirectMessageReceiverBuilder()
                 .withSubscriptions(TopicSubscription.of(TOPIC_PREFIX + "*/hello/>")).build().start();
         final MessageHandler messageHandler = (inboundMessage) -> {
-            System.out.printf("vvv RECEIVED A MESSAGE vvv%n TOPIC:   %s%n PAYLOAD: %s%n===%n",
-                inboundMessage.getDestinationName(), inboundMessage.getPayloadAsString());
-
+            System.out.printf("vvv RECEIVED A MESSAGE vvv%n%s===%n",inboundMessage.dump());  // just print
         };
         receiver.receiveAsync(messageHandler);
         
