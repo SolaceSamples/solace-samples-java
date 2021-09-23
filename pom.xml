@@ -1,4 +1,3 @@
-<?xml version="1.0" encoding="UTF-8"?>
 <!--
 
 This Solace artifact is a commercially licensed product and source code is not provided.
@@ -11,72 +10,126 @@ software, you are agreeing to the license terms and conditions located at
 https://solace.com/license-software.
 
 -->
-<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0"
-    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
   <modelVersion>4.0.0</modelVersion>
-  <groupId>com.solace</groupId>
+
+  <parent>
+    <groupId>com.solace</groupId>
+    <artifactId>solace-messaging</artifactId>
+    <version>1.0.0-SNAPSHOT</version>
+    <relativePath>..</relativePath>
+  </parent>
+
   <artifactId>solace-messaging-client-sampler</artifactId>
-  <version>0.0.5-SNAPSHOT</version>
-  <name>Sampler for Solace PubSub Messaging Client</name>
-  <description>API sampler for Java realtime client for Solace Pub/Sub+.</description>
-  <url>https://solace.com/solace-messaging-client-sampler</url>
+  <name>Sampler for Solace PubSub+ Messaging API for Java</name>
+
+<description>Java client API sampler for Solace PubSub+ advanced event broker.</description>
+
   <organization>
-    <name>Solace corporation</name>
     <url>https://solace.com</url>
+    <name>Solace Corporation</name>
   </organization>
+  
+  <developers>
+    <developer>
+      <email>info@solace.com</email>
+      <name>Solace</name>
+      <organization>Solace Corporation</organization>
+      <organizationUrl>https://solace.com</organizationUrl>
+    </developer>
+  </developers>
+
   <licenses>
     <license>
-      <name>SOLACE CORPORATION LICENSE AGREEMENT</name>
+      <name>License Agreement for Solace Software</name>
       <url>https://solace.com/license-software</url>
     </license>
   </licenses>
-  <developers>
-    <developer>
-      <id>mgevantmakher</id>
-      <name>M. Gevantmakher</name>
-      <organization>Solace</organization>
-      <organizationUrl>https://solace.com/</organizationUrl>
-    </developer>
-  </developers>
+
   <properties>
-    <assertj-core.version>3.15.0</assertj-core.version>
     <maven.surefire.plugin.version>2.22.2</maven.surefire.plugin.version>
-    <junit-platform.version>5.6.2</junit-platform.version>
-    <maven-javadoc-plugin.version>3.1.1</maven-javadoc-plugin.version>
-    <java.version>1.8</java.version>
-    <junit-platform-engine.version>1.6.0</junit-platform-engine.version>
-    <maven.compiler.target>1.8</maven.compiler.target>
-    <com.solacesystems.version>10.9.1-nextGen.41309</com.solacesystems.version>
-    <mockito-platform.version>3.4.0</mockito-platform.version>
-    <maven.failsafe.plugin.version>2.22.2</maven.failsafe.plugin.version>
-    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <maven.compiler.source>1.8</maven.compiler.source>
   </properties>
+
+  <build>
+    <plugins>
+      <plugin>
+        <artifactId>maven-compiler-plugin</artifactId>
+      </plugin>
+      <!--dont run tests -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <version>${maven.surefire.plugin.version}</version>
+        <configuration>
+          <skipTests>true</skipTests>
+        </configuration>
+      </plugin>
+      <!--
+            <plugin>
+              <groupId>org.codehaus.mojo</groupId>
+              <artifactId>build-helper-maven-plugin</artifactId>
+              <version>3.0.0</version>
+              <executions>
+                <execution>
+                  <id>compile</id>
+                  <phase>generate-sources</phase>
+                  <goals>
+                    <goal>add-source</goal>
+                  </goals>
+                  <configuration>
+                    <sources>
+                      <source>../messaging-client/src/main/java</source>
+                    </sources>
+                  </configuration>
+                </execution>
+
+              </executions>
+            </plugin>
+      -->
+      <!--dont create a jar file
+      <plugin>
+        <artifactId>maven-jar-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>default-jar</id>
+            <phase>none</phase>
+          </execution>
+        </executions>
+      </plugin>
+      -->
+
+      <!-- don't install anything-->
+      <plugin>
+        <artifactId>maven-install-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>default-install</id>
+            <phase>none</phase>
+          </execution>
+        </executions>
+      </plugin>
+
+      <!-- do not deploy anything -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-deploy-plugin</artifactId>
+        <configuration>
+          <skip>true</skip>
+        </configuration>
+      </plugin>
+
+    </plugins>
+  </build>
+
+
   <dependencies>
-    <dependency>
-      <groupId>com.solacesystems</groupId>
-      <artifactId>sol-jcsmp</artifactId>
-      <version>10.9.1-nextGen.41309</version>
-      <scope>compile</scope>
-    </dependency>
     <dependency>
       <groupId>com.solace</groupId>
       <artifactId>solace-messaging-client</artifactId>
-      <version>0.0.5-SNAPSHOT</version>
-      <scope>compile</scope>
+      <version>${project.parent.version}</version>
     </dependency>
+
   </dependencies>
-  <pluginRepositories>
-    <pluginRepository>
-      <releases>
-        <updatePolicy>never</updatePolicy>
-      </releases>
-      <snapshots>
-        <enabled>false</enabled>
-      </snapshots>
-      <id>central</id>
-      <name>Central Repository</name>
-      <url>https://repo.maven.apache.org/maven2</url>
-    </pluginRepository>
-  </pluginRepositories>
+
 </project>
