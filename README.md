@@ -1,7 +1,7 @@
-# solace-samples-java-new
+# Solace Samples Java
 
 ## Overview
-This repository holds code samples for the "Solace PubSub+ Messaging API for Java"  
+This repository holds code samples for the "Solace PubSub+ Messaging API for Java". Note: The solace Java JCSMP Samples could be found here [https://github.com/SolaceSamples/solace-samples-java-jcsmp](https://github.com/SolaceSamples/solace-samples-java-jcsmp)
 
 ## Structure of Samples
 There are two types of samples available: 
