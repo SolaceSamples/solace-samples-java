@@ -59,9 +59,9 @@ dependencies {
     implementation group: 'com.solace', name: 'solace-messaging-client', version: '1.0.0'
 
     // new an improved logging framework, no more slf4j
-    implementation group: 'org.apache.logging.log4j', name: 'log4j-api', version: '2.11.1'
-    implementation group: 'org.apache.logging.log4j', name: 'log4j-core', version: '2.11.1'
-    implementation group: 'org.apache.logging.log4j', name: 'log4j-jcl', version: '2.11.1'
+    implementation group: 'org.apache.logging.log4j', name: 'log4j-api', version: '2.16.0'
+    implementation group: 'org.apache.logging.log4j', name: 'log4j-core', version: '2.16.0'
+    implementation group: 'org.apache.logging.log4j', name: 'log4j-jcl', version: '2.16.0'
 }
 
 
