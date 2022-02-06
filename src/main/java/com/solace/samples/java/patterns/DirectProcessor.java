@@ -17,10 +17,15 @@
 package com.solace.samples.java.patterns;
 
 
+import java.io.IOException;
+import java.util.Properties;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+
 import com.solace.messaging.MessagingService;
 import com.solace.messaging.config.SolaceProperties.AuthenticationProperties;
 import com.solace.messaging.config.SolaceProperties.MessageProperties;
-import com.solace.messaging.config.SolaceProperties.ReceiverProperties;
 import com.solace.messaging.config.SolaceProperties.ServiceProperties;
 import com.solace.messaging.config.SolaceProperties.TransportLayerProperties;
 import com.solace.messaging.config.profile.ConfigurationProfile;
@@ -31,9 +36,6 @@ import com.solace.messaging.receiver.DirectMessageReceiver;
 import com.solace.messaging.receiver.MessageReceiver.MessageHandler;
 import com.solace.messaging.resources.Topic;
 import com.solace.messaging.resources.TopicSubscription;
-import java.io.IOException;
-import java.nio.charset.Charset;
-import java.util.Properties;
 
 /**
  * A Processor is a microservice or application that receives a message, does something with the info,
@@ -46,7 +48,10 @@ public class DirectProcessor {
 
     private static final String SAMPLE_NAME = DirectProcessor.class.getSimpleName();
     private static final String TOPIC_PREFIX = "solace/samples/";  // used as the topic "root"
+    private static final String API = "Java";
     
+    private static volatile int msgRecvCounter = 0;              // num messages received
+    private static volatile int msgSentCounter = 0;                   // num messages sent
     private static volatile boolean isShutdown = false;  // are we done yet?
 
     /** Main method. */
@@ -100,9 +105,9 @@ public class DirectProcessor {
         
         OutboundMessageBuilder messageBuilder = messagingService.messageBuilder();
 
-        final MessageHandler messageHandler = (inboundMsg) -> {
+        final MessageHandler messageHandler = (inboundMsg) -> {  // async message callback handler
             String inboundTopic = inboundMsg.getDestinationName();
-            if (inboundTopic.matches(TOPIC_PREFIX + ".+?/direct/pub/.*")) {  // use of regex to match variable API level
+            if (inboundTopic.contains("/direct/pub/")) {  // simple validation of topic
                 // how to "process" the incoming message? maybe do a DB lookup? add some additional properties? or change the payload?
                 final String upperCaseMessage = inboundTopic.toUpperCase();  // as a silly example of "processing"
                 
@@ -111,23 +116,27 @@ public class DirectProcessor {
                 }
                 OutboundMessage outboundMsg = messageBuilder.build(upperCaseMessage);  // build TextMessage to send
                 String [] inboundTopicLevels = inboundTopic.split("/",6);
-                String outboundTopic = new StringBuilder(TOPIC_PREFIX).append("java/direct/upper/").append(inboundTopicLevels[5]).toString();
+                String outboundTopic = new StringBuilder(TOPIC_PREFIX).append(API.toLowerCase())
+                		.append("/direct/upper/").append(inboundTopicLevels[5]).toString();  // to "upper" topic
                 try {
                     publisher.publish(outboundMsg, Topic.of(outboundTopic));
-                } catch (RuntimeException e) {  // threw from send(), only thing that is throwing here, but keep trying (unless shutdown?)
+                } catch (RuntimeException e) {  // threw from send(), only thing that is throwing here
                     System.out.printf("### Caught while trying to publisher.publish(): %s%n",e);
                     isShutdown = true;
                 }
-            } else if (inboundMsg.getDestinationName().endsWith("control/quit")) {  // special sample message
-                System.out.println(">>> QUIT message received, shutting down.");  // example of command-and-control w/msgs
-                isShutdown = true;
+            } else {
+            	// received a message that I wasn't expecting... handle it here somehow
             }
         };
-        receiver.receiveAsync(messageHandler);
+        receiver.receiveAsync(messageHandler);  // non-blocking receiver (vs. blocking receive() method)
 
-        System.out.println(SAMPLE_NAME + " connected, and running. Press [ENTER] to quit.");
+        System.out.println(API + " " + SAMPLE_NAME + " connected, and running. Press [ENTER] to quit.");
         while (System.in.available() == 0 && !isShutdown) {  // time to loop!
             try {
+                System.out.printf("%s %s Received -> Published msgs/s: %,d -> %,d%n",
+                        API, SAMPLE_NAME, msgRecvCounter, msgSentCounter);  // simple way of calculating message rates
+                msgRecvCounter = 0;
+                msgSentCounter = 0;
                 Thread.sleep(1000);  // take a pause
             } catch (InterruptedException e) {
                 // Thread.sleep() interrupted... probably getting shut down
