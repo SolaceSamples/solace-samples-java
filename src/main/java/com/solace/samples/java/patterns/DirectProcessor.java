@@ -19,9 +19,6 @@ package com.solace.samples.java.patterns;
 
 import java.io.IOException;
 import java.util.Properties;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 
 import com.solace.messaging.MessagingService;
 import com.solace.messaging.config.SolaceProperties.AuthenticationProperties;
@@ -60,7 +57,7 @@ public class DirectProcessor {
             System.out.printf("Usage: %s <host:port> <message-vpn> <client-username> [password]%n%n", SAMPLE_NAME);
             System.exit(-1);
         }
-        System.out.println(SAMPLE_NAME + " initializing...");
+        System.out.println(API + " " + SAMPLE_NAME + " initializing...");
 
         final Properties properties = new Properties();
         properties.setProperty(TransportLayerProperties.HOST, args[0]);          // host:port
