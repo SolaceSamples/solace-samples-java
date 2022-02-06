@@ -16,17 +16,17 @@
 
 package com.solace.samples.java.patterns;
 
+import java.io.IOException;
+import java.util.Properties;
+
 import com.solace.messaging.MessagingService;
 import com.solace.messaging.config.SolaceProperties.AuthenticationProperties;
-import com.solace.messaging.config.SolaceProperties.ReceiverProperties;
 import com.solace.messaging.config.SolaceProperties.ServiceProperties;
 import com.solace.messaging.config.SolaceProperties.TransportLayerProperties;
 import com.solace.messaging.config.profile.ConfigurationProfile;
 import com.solace.messaging.receiver.DirectMessageReceiver;
 import com.solace.messaging.receiver.MessageReceiver.MessageHandler;
 import com.solace.messaging.resources.TopicSubscription;
-import java.io.IOException;
-import java.util.Properties;
 
 /**
  * A more performant sample that shows an application that subscribes.
@@ -35,6 +35,7 @@ public class DirectSubscriber {
     
     private static final String SAMPLE_NAME = DirectSubscriber.class.getSimpleName();
     private static final String TOPIC_PREFIX = "solace/samples/";  // used as the topic "root"
+    private static final String API = "Java";
     
     private static volatile int msgRecvCounter = 0;                   // num messages sent
     private static volatile boolean hasDetectedDiscard = false;  // detected any discards yet?
@@ -46,7 +47,7 @@ public class DirectSubscriber {
             System.out.printf("Usage: %s <host:port> <message-vpn> <client-username> [password]%n%n", SAMPLE_NAME);
             System.exit(-1);
         }
-        System.out.println(SAMPLE_NAME + " initializing...");
+        System.out.println(API + " " + SAMPLE_NAME + " initializing...");
 
         final Properties properties = new Properties();
         properties.setProperty(TransportLayerProperties.HOST, args[0]);          // host:port
@@ -78,7 +79,7 @@ public class DirectSubscriber {
         // build the Direct receiver object
         final DirectMessageReceiver receiver = messagingService.createDirectMessageReceiverBuilder()
                 .withSubscriptions(TopicSubscription.of(TOPIC_PREFIX + "*/direct/>"))
-                .withSubscriptions(TopicSubscription.of(TOPIC_PREFIX + "control/>"))
+                // add more subscriptions here if you want
                 .build();
         receiver.start();
         
@@ -100,14 +101,10 @@ public class DirectSubscriber {
                 //  c) increase size of consumer's D-1 egress buffers (check client-profile) (helps more with bursts)
                 hasDetectedDiscard = true;  // set my own flag
             }
-            if (inboundMessage.getDestinationName().endsWith("control/quit")) {  // special sample message
-                System.out.println("QUIT message received, shutting down.");  // example of command-and-control w/msgs
-                isShutdown = true;
-            }
         };
         receiver.receiveAsync(messageHandler);
 
-        System.out.println(SAMPLE_NAME + " connected, and running. Press [ENTER] to quit.");
+        System.out.println(API + " " + SAMPLE_NAME + " connected, and running. Press [ENTER] to quit.");
         try {
             while (System.in.available() == 0 && !isShutdown) {
                 Thread.sleep(1000);  // wait 1 second

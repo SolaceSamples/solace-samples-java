@@ -16,10 +16,13 @@
 
 package com.solace.samples.java;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.Properties;
+
 import com.solace.messaging.MessagingService;
-import com.solace.messaging.config.SolaceProperties;
 import com.solace.messaging.config.SolaceProperties.AuthenticationProperties;
-import com.solace.messaging.config.SolaceProperties.ReceiverProperties;
 import com.solace.messaging.config.SolaceProperties.ServiceProperties;
 import com.solace.messaging.config.SolaceProperties.TransportLayerProperties;
 import com.solace.messaging.config.profile.ConfigurationProfile;
@@ -30,10 +33,6 @@ import com.solace.messaging.receiver.DirectMessageReceiver;
 import com.solace.messaging.receiver.MessageReceiver.MessageHandler;
 import com.solace.messaging.resources.Topic;
 import com.solace.messaging.resources.TopicSubscription;
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.util.Properties;
 
 /**
  * This simple introductory sample shows an application that both publishes and subscribes.
@@ -42,12 +41,14 @@ public class HelloWorld {
     
     private static final String SAMPLE_NAME = HelloWorld.class.getSimpleName();
     private static final String TOPIC_PREFIX = "solace/samples/";  // used as the topic "root"
+    private static final String API = "Java";
     private static volatile boolean isShutdown = false;           // are we done yet?
 
     /** Simple application for doing pub/sub. */
     public static void main(String... args) throws IOException {
         if (args.length < 3) {  // Check command line arguments
-            System.out.printf("Usage: %s <host:port> <message-vpn> <client-username> [password]%n%n", SAMPLE_NAME);
+            System.out.printf("Usage: %s <host:port> <message-vpn> <client-username> [password]%n", SAMPLE_NAME);
+            System.out.printf("  e.g. %s localhost default default%n%n", SAMPLE_NAME);
             System.exit(-1);
         }
         // User prompt, what is your name??, to use in the topic
@@ -58,7 +59,7 @@ public class HelloWorld {
             uniqueName = reader.readLine().trim().replaceAll("\\s+", "_");  // clean up whitespace
         }
         
-        System.out.println(SAMPLE_NAME + " initializing...");
+        System.out.println(API + " " + SAMPLE_NAME + " initializing...");
         final Properties properties = new Properties();
         properties.setProperty(TransportLayerProperties.HOST, args[0]);          // host:port
         properties.setProperty(ServiceProperties.VPN_NAME,  args[1]);     // message-vpn
@@ -86,14 +87,14 @@ public class HelloWorld {
         System.out.printf("%nConnected and subscribed. Ready to publish. Press [ENTER] to quit.%n");
         System.out.printf(" ~ Run this sample twice splitscreen to see true publish-subscribe. ~%n%n");
 
+        OutboundMessageBuilder messageBuilder = messagingService.messageBuilder();
         while (System.in.available() == 0 && !isShutdown) {  // loop now, just use main thread
             try {
                 Thread.sleep(5000);  // take a pause
-                OutboundMessageBuilder messageBuilder = messagingService.messageBuilder();
                 // payload is our "hello world" message from you!
                 OutboundMessage message = messageBuilder.build(String.format("Hello World from %s!",uniqueName));
-                // make a dynamic topic: solace/samples/hello/[uniqueName]
-                String topicString = TOPIC_PREFIX + "java/hello/" + uniqueName.toLowerCase();
+                // make a dynamic topic: solace/samples/java/hello/[uniqueName]
+                String topicString = TOPIC_PREFIX + API.toLowerCase() + "/hello/" + uniqueName.toLowerCase();
                 System.out.printf(">> Calling send() on %s%n",topicString);
                 publisher.publish(message, Topic.of(topicString));
             } catch (RuntimeException e) {

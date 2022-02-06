@@ -17,11 +17,11 @@ run.enabled = false
 distTar.enabled=false
 distZip.enabled=false
 
-applicationName = 'sol-new-java-samples'
+//applicationName = 'sol-new-java-samples'
 //version = ''
 
 jar {
-    archiveBaseName = 'solace-samples-java-new'
+    archiveBaseName = 'solace-samples-java'
     archiveVersion = ''
     manifest {
         attributes 'Implementation-Title': 'Solace Java Getting Started Samples',
@@ -69,6 +69,7 @@ sourceSets {
     main {
         java {
             srcDir 'src/main/java'
+            srcDir 'src/dist/config'
        }
    }
 }
@@ -95,6 +96,13 @@ scripts.each() { scriptName, className ->
         applicationName = scriptName
         outputDir = new File(project.buildDir, 'scripts')
         classpath = jar.outputs.files + project.configurations.runtimeClasspath
+        classpath += files('src/dist/config')  // this is where our log4j2.xml file will be
+        doLast {  // necessary since Gradle assumes all classpath are under 'lib', need to modify
+          def windowsScriptFile = file getWindowsScript()
+          def unixScriptFile = file getUnixScript()
+          windowsScriptFile.text = windowsScriptFile.text.replace('%APP_HOME%\\lib\\config', '%APP_HOME%\\config')
+          unixScriptFile.text = unixScriptFile.text.replace('$APP_HOME/lib/config', '$APP_HOME/config')
+        }
         defaultJvmOpts = ['-ea']
     }
     applicationDistribution.into("bin") {
