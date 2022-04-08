@@ -88,7 +88,8 @@ def scripts = [
     'HelloWorld':'com.solace.samples.java.HelloWorld',
     'DirectPublisher':'com.solace.samples.java.patterns.DirectPublisher',
     'DirectSubscriber':'com.solace.samples.java.patterns.DirectSubscriber',
-    'DirectProcessor':'com.solace.samples.java.patterns.DirectProcessor'
+    'DirectProcessor':'com.solace.samples.java.patterns.DirectProcessor',
+    'GuaranteedNonBlockingPublisher':'com.solace.samples.java.patterns.GuaranteedNonBlockingPublisher'
 ]
 scripts.each() { scriptName, className ->
     def t = tasks.create(name: scriptName+'StartScript', type: CreateStartScripts) {
