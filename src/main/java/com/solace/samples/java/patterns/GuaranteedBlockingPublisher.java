@@ -16,16 +16,6 @@
 
 package com.solace.samples.java.patterns;
 
-import java.io.IOException;
-import java.util.Arrays;
-import java.util.Properties;
-import java.util.UUID;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
 import com.solace.messaging.MessagingService;
 import com.solace.messaging.PubSubPlusClientException;
 import com.solace.messaging.config.SolaceProperties.AuthenticationProperties;
@@ -37,15 +27,25 @@ import com.solace.messaging.publisher.OutboundMessage;
 import com.solace.messaging.publisher.OutboundMessageBuilder;
 import com.solace.messaging.publisher.PersistentMessagePublisher;
 import com.solace.messaging.resources.Topic;
+import com.solacesystems.jcsmp.BytesMessage;
+import com.solacesystems.jcsmp.JCSMPFactory;
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.Properties;
+import java.util.UUID;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * A more performant sample that shows an application that publishes.
  */
-public class GuaranteedNonBlockingPublisher {
+public class GuaranteedBlockingPublisher {
     
-    private static final String SAMPLE_NAME = GuaranteedNonBlockingPublisher.class.getSimpleName();
+    private static final String SAMPLE_NAME = GuaranteedBlockingPublisher.class.getSimpleName();
     private static final String TOPIC_PREFIX = "solace/samples/";  // used as the topic "root"
-    private static final String API = "Java";
+    private static final String API = "JAVA";
     private static final int APPROX_MSG_RATE_PER_SEC = 100;
     private static final int PAYLOAD_SIZE = 512;
     
@@ -91,45 +91,43 @@ public class GuaranteedNonBlockingPublisher {
         
         // build the publisher object
         final PersistentMessagePublisher publisher = messagingService.createPersistentMessagePublisherBuilder()
-                .onBackPressureWait(1)
+                .withDeliveryAckWindowSize(30)
                 .build();
         publisher.start();
-        
-
-        // publisher receipt callback, can be called for ACL violations, spool over quota, nobody subscribed to a topic, etc.
-        publisher.setMessagePublishReceiptListener(publishReceipt -> {
-            final PubSubPlusClientException e = publishReceipt.getException();
-            if (null != e) {  // not good, a NACK
-                Object userContext = publishReceipt.getUserContext();  // optionally set at publish()
-                if (userContext != null) {
-                    logger.warn(String.format("NACK for Message %s - %s", userContext, e.toString()));
-                } else {
-                    OutboundMessage outboundMessage = publishReceipt.getMessage();  // which message got NACKed?
-                    logger.warn(String.format("NACK for Message %s - %s", outboundMessage, e));
-                }
-            } else {
-                OutboundMessage outboundMessage = publishReceipt.getMessage();
-                logger.debug(String.format("ACK for Message %s", outboundMessage));  // good enough, the broker has it now
-            }
-        });
         
         ExecutorService publishExecutor = Executors.newSingleThreadExecutor();
         publishExecutor.submit(() -> {  // create an application thread for publishing in a loop
             System.out.println("Publishing to topic '"+ TOPIC_PREFIX + API.toLowerCase() + 
                     "/pers/pub/...', please ensure queue has matching subscription."); 
             byte[] payload = new byte[PAYLOAD_SIZE];  // preallocate memory, for reuse, for performance
+            Properties messageProps = new Properties();
+            messageProps.put(MessageProperties.PERSISTENT_ACK_IMMEDIATELY, "true");
             while (!isShutdown) {
                 OutboundMessageBuilder messageBuilder = messagingService.messageBuilder();
                 try {
                     // each loop, change the payload, less trivial
                     char chosenCharacter = (char)(Math.round(msgSentCounter % 26) + 65);  // rotate through letters [A-Z]
                     Arrays.fill(payload,(byte)chosenCharacter);  // fill the payload completely with that char
-                    messageBuilder.withProperty(MessageProperties.APPLICATION_MESSAGE_ID, UUID.randomUUID().toString());  // as an example of a header
+                    messageBuilder.withProperty(MessageProperties.APPLICATION_MESSAGE_ID, UUID.randomUUID().toString())  // as an example of a header
+                                  .fromProperties(messageProps);
+                  //  .withProperty(MessageProperties.PERSISTENT_ACK_IMMEDIATELY, "true");  // or shrink the ACK window size
                     OutboundMessage message = messageBuilder.build(payload);  // binary payload message
+                    //System.out.println(message);
+                    //System.out.println(message.dump());
                     // dynamic topics!!
-                    String topicString = new StringBuilder(TOPIC_PREFIX).append("java/pers/pub/").append(chosenCharacter).toString();
-                    publisher.publish(message,Topic.of(topicString));  // send the message
-                    msgSentCounter++;  // add one
+                    String topicString = new StringBuilder(TOPIC_PREFIX).append(API.toLowerCase())
+                            .append("/pers/pub/").append(chosenCharacter).toString();
+                    try {
+                        // send the message
+                        publisher.publishAwaitAcknowledgement(message,Topic.of(topicString),5000L);
+                        msgSentCounter++;  // add one
+                    } catch (PubSubPlusClientException e) {  // could be different types
+                        logger.warn(String.format("NACK for Message %s - %s", message, e));
+
+                    } catch (InterruptedException e) {
+                        // got interrupted by someone while waiting for my publish confirm?
+                        logger.info("Got interrupted, probably shutting down",e);
+                    }
                 } catch (RuntimeException e) {  // threw from send(), only thing that is throwing here, but keep trying (unless shutdown?)
                     logger.warn("### Caught while trying to publisher.publish()",e);
                     isShutdown = true;
@@ -151,7 +149,7 @@ public class GuaranteedNonBlockingPublisher {
         while (System.in.available() == 0 && !isShutdown) {
             try {
                 Thread.sleep(1000);
-                System.out.printf("Published msgs/s: %,d%n",msgSentCounter);  // simple way of calculating message rates
+                System.out.printf("%s %s Published msgs/s: %,d%n",API,SAMPLE_NAME,msgSentCounter);  // simple way of calculating message rates
                 msgSentCounter = 0;
             } catch (InterruptedException e) {
                 // Thread.sleep() interrupted... probably getting shut down
