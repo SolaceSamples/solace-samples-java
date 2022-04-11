@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Solace Corporation. All rights reserved.
+ * Copyright 2021-2022 Solace Corporation. All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -20,8 +20,9 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.Properties;
 import java.util.UUID;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -55,7 +56,7 @@ public class GuaranteedNonBlockingPublisher {
     private static final Logger logger = LogManager.getLogger();  // log4j2, but could also use SLF4J, JCL, etc.
 
     /** Main method. */
-    public static void main(String... args) throws IOException {
+    public static void main(String... args) throws IOException, InterruptedException {
         if (args.length < 3) {  // Check command line arguments
             System.out.printf("Usage: %s <host:port> <message-vpn> <client-username> [password]%n%n", SAMPLE_NAME);
             System.exit(-1);
@@ -113,52 +114,45 @@ public class GuaranteedNonBlockingPublisher {
             }
         });
         
-        ExecutorService publishExecutor = Executors.newSingleThreadExecutor();
-        publishExecutor.submit(() -> {  // create an application thread for publishing in a loop
-            System.out.println("Publishing to topic '"+ TOPIC_PREFIX + API.toLowerCase() + 
-                    "/pers/pub/...', please ensure queue has matching subscription."); 
-            byte[] payload = new byte[PAYLOAD_SIZE];  // preallocate memory, for reuse, for performance
-            while (!isShutdown) {
-                OutboundMessageBuilder messageBuilder = messagingService.messageBuilder();
-                try {
-                    // each loop, change the payload, less trivial
-                    char chosenCharacter = (char)(Math.round(msgSentCounter % 26) + 65);  // rotate through letters [A-Z]
-                    Arrays.fill(payload,(byte)chosenCharacter);  // fill the payload completely with that char
-                    messageBuilder.withProperty(MessageProperties.APPLICATION_MESSAGE_ID, UUID.randomUUID().toString());  // as an example of a header
-                    OutboundMessage message = messageBuilder.build(payload);  // binary payload message
-                    // dynamic topics!!
-                    String topicString = new StringBuilder(TOPIC_PREFIX).append("java/pers/pub/").append(chosenCharacter).toString();
-                    publisher.publish(message,Topic.of(topicString));  // send the message
-                    msgSentCounter++;  // add one
-                } catch (RuntimeException e) {  // threw from send(), only thing that is throwing here, but keep trying (unless shutdown?)
-                    logger.warn("### Caught while trying to publisher.publish()",e);
-                    isShutdown = true;
-                } finally {
-                    try {
-                        Thread.sleep(1000 / APPROX_MSG_RATE_PER_SEC);  // do Thread.sleep(0) for max speed
-                        // Note: STANDARD Edition Solace PubSub+ broker is limited to 10k msg/s max ingress
-                    } catch (InterruptedException e) {
-                        isShutdown = true;
-                    }
-                }
-            }
-            logger.info("Publisher thread shutting down");
-            publishExecutor.shutdown();
-        });
+        ScheduledExecutorService statsPrintingThread = Executors.newSingleThreadScheduledExecutor();
+        statsPrintingThread.scheduleAtFixedRate(() -> {
+            System.out.printf("%s %s Published msgs/s: %,d%n",API,SAMPLE_NAME,msgSentCounter);  // simple way of calculating message rates
+            msgSentCounter = 0;
+        }, 1, 1, TimeUnit.SECONDS);
 
         System.out.println(API + " " + SAMPLE_NAME + " connected, and running. Press [ENTER] to quit.");
+        System.out.println("Publishing to topic '"+ TOPIC_PREFIX + API.toLowerCase() + 
+                "/pers/pub/...', please ensure queue has matching subscription."); 
+        byte[] payload = new byte[PAYLOAD_SIZE];  // preallocate memory, for reuse, for performance
         // block the main thread, waiting for a quit signal
         while (System.in.available() == 0 && !isShutdown) {
+            OutboundMessageBuilder messageBuilder = messagingService.messageBuilder();
             try {
-                Thread.sleep(1000);
-                System.out.printf("Published msgs/s: %,d%n",msgSentCounter);  // simple way of calculating message rates
-                msgSentCounter = 0;
-            } catch (InterruptedException e) {
-                // Thread.sleep() interrupted... probably getting shut down
+                // each loop, change the payload, less trivial
+                char chosenCharacter = (char)(Math.round(msgSentCounter % 26) + 65);  // rotate through letters [A-Z]
+                Arrays.fill(payload,(byte)chosenCharacter);  // fill the payload completely with that char
+                messageBuilder.withProperty(MessageProperties.APPLICATION_MESSAGE_ID, UUID.randomUUID().toString());  // as an example of a header
+                OutboundMessage message = messageBuilder.build(payload);  // binary payload message
+                // dynamic topics!!
+                String topicString = new StringBuilder(TOPIC_PREFIX).append("java/pers/pub/").append(chosenCharacter).toString();
+                publisher.publish(message,Topic.of(topicString));  // send the message
+                msgSentCounter++;  // add one
+            } catch (RuntimeException e) {  // threw from publish(), only thing that is throwing here, but keep trying (unless shutdown?)
+                logger.warn("### Caught while trying to publisher.publish()",e);
+                isShutdown = true;
+            } finally {
+                try {
+                    Thread.sleep(1000 / APPROX_MSG_RATE_PER_SEC);  // do Thread.sleep(0) for max speed
+                    // Note: STANDARD Edition Solace PubSub+ broker is limited to 10k msg/s max ingress
+                } catch (InterruptedException e) {
+                    isShutdown = true;
+                }
             }
-        }
+        }    
         isShutdown = true;
+        statsPrintingThread.shutdown();  // stop printing stats
         publisher.terminate(1500);
+        Thread.sleep(1500);  // give time for the ACKs to arrive from the broker
         messagingService.disconnect();
         System.out.println("Main thread quitting.");
     }
