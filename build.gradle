@@ -51,7 +51,6 @@ idea {
 
 repositories {
     mavenCentral()
-    jcenter()
 }
 
 dependencies {
@@ -89,11 +88,13 @@ def scripts = [
     'DirectSubscriber':'com.solace.samples.java.patterns.DirectSubscriber',
     'DirectProcessor':'com.solace.samples.java.patterns.DirectProcessor',
     'GuaranteedNonBlockingPublisher':'com.solace.samples.java.patterns.GuaranteedNonBlockingPublisher',
-    'GuaranteedBlockingPublisher':'com.solace.samples.java.patterns.GuaranteedBlockingPublisher'
+    'GuaranteedBlockingPublisher':'com.solace.samples.java.patterns.GuaranteedBlockingPublisher',
+    'GuaranteedSubscriber':'com.solace.samples.java.patterns.GuaranteedSubscriber',
+    'GuaranteedProcessor':'com.solace.samples.java.patterns.GuaranteedProcessor'
 ]
 scripts.each() { scriptName, className ->
     def t = tasks.create(name: scriptName+'StartScript', type: CreateStartScripts) {
-        mainClassName = className
+        mainClass = className
         applicationName = scriptName
         outputDir = new File(project.buildDir, 'scripts')
         classpath = jar.outputs.files + project.configurations.runtimeClasspath
