@@ -79,11 +79,27 @@ public class GuaranteedSubscriber {
             logger.info("### RECONNECTED: "+serviceEvent);
         });
 
-        // this receiver assumes the queue is already existing and has a topic subscription mapped to it
+        // this receiver assumes the queue already exists and has a topic subscription mapped to it
         // if not, first create queue with PubSub+Manager, or SEMP management API
         final PersistentMessageReceiver receiver = messagingService
                 .createPersistentMessageReceiverBuilder()
-                .build(Queue.durableExclusiveQueue(QUEUE_NAME)).start();
+                .build(Queue.durableExclusiveQueue(QUEUE_NAME));
+        
+        try {
+        	receiver.start();
+        } catch (RuntimeException e) {
+            logger.error(e);
+            System.err.printf("%n*** Could not establish a connection to queue '%s': %s%n", QUEUE_NAME, e.getMessage());
+            System.err.println("Create queue using PubSub+ Manager WebGUI, and add subscription "+
+                    GuaranteedNonBlockingPublisher.TOPIC_PREFIX+"*/pers/>");
+            System.err.println("  or see the SEMP CURL scripts inside the 'semp-rest-api' directory.");
+            // could also try to retry, loop and retry until successfully able to connect to the queue
+            System.err.println("NOTE: see HowToEnableAutoCreationOfMissingResourcesOnBroker.java sample for how to construct queue with consumer app.");
+            System.err.println("Exiting.");
+            return;
+        	
+        }
+
 
         receiver.receiveAsync(message -> {
         	msgRecvCounter++;

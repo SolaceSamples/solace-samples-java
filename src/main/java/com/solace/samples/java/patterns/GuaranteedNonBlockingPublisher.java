@@ -139,7 +139,7 @@ public class GuaranteedNonBlockingPublisher {
                 msgSentCounter++;  // add one
             } catch (RuntimeException e) {  // threw from publish(), only thing that is throwing here, but keep trying (unless shutdown?)
                 logger.warn("### Caught while trying to publisher.publish()",e);
-                isShutdown = true;
+                isShutdown = true;  // just example, maybe look to see if recoverable
             } finally {
                 try {
                     Thread.sleep(1000 / APPROX_MSG_RATE_PER_SEC);  // do Thread.sleep(0) for max speed
