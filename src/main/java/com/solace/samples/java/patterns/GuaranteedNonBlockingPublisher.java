@@ -19,7 +19,6 @@ package com.solace.samples.java.patterns;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Properties;
-import java.util.UUID;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -30,7 +29,6 @@ import org.apache.logging.log4j.Logger;
 import com.solace.messaging.MessagingService;
 import com.solace.messaging.PubSubPlusClientException;
 import com.solace.messaging.config.SolaceProperties.AuthenticationProperties;
-import com.solace.messaging.config.SolaceProperties.MessageProperties;
 import com.solace.messaging.config.SolaceProperties.ServiceProperties;
 import com.solace.messaging.config.SolaceProperties.TransportLayerProperties;
 import com.solace.messaging.config.profile.ConfigurationProfile;
@@ -40,7 +38,8 @@ import com.solace.messaging.publisher.PersistentMessagePublisher;
 import com.solace.messaging.resources.Topic;
 
 /**
- * A more performant sample that shows an application that publishes.
+ * A more performant sample that shows non-blocking
+ * guaranteed publishing with asynchronous acknowledgments.
  */
 public class GuaranteedNonBlockingPublisher {
     
@@ -70,7 +69,6 @@ public class GuaranteedNonBlockingPublisher {
         if (args.length > 3) {
             properties.setProperty(AuthenticationProperties.SCHEME_BASIC_PASSWORD, args[3]);  // client-password
         }
-        //properties.setProperty(JCSMPProperties.GENERATE_SEQUENCE_NUMBERS, true);  // not required, but interesting
         properties.setProperty(TransportLayerProperties.RECONNECTION_ATTEMPTS, "20");  // recommended settings
         properties.setProperty(TransportLayerProperties.CONNECTION_RETRIES_PER_HOST, "5");
         // https://docs.solace.com/Solace-PubSub-Messaging-APIs/API-Developer-Guide/Configuring-Connection-T.htm
@@ -80,7 +78,7 @@ public class GuaranteedNonBlockingPublisher {
                 .build();
         messagingService.connect();  // blocking connect
         messagingService.addServiceInterruptionListener(serviceEvent -> {
-            logger.info("### SERVICE INTERRUPTION: "+serviceEvent.getCause());
+            logger.warn("### SERVICE INTERRUPTION: "+serviceEvent.getCause());
             //isShutdown = true;
         });
         messagingService.addReconnectionAttemptListener(serviceEvent -> {
@@ -103,7 +101,7 @@ public class GuaranteedNonBlockingPublisher {
             if (null != e) {  // not good, a NACK
                 Object userContext = publishReceipt.getUserContext();  // optionally set at publish()
                 if (userContext != null) {
-                    logger.warn(String.format("NACK for Message %s - %s", userContext, e.toString()));
+                    logger.warn(String.format("NACK for Message %s - %s", userContext, e));
                 } else {
                     OutboundMessage outboundMessage = publishReceipt.getMessage();  // which message got NACKed?
                     logger.warn(String.format("NACK for Message %s - %s", outboundMessage, e));
@@ -131,7 +129,6 @@ public class GuaranteedNonBlockingPublisher {
                 // each loop, change the payload, less trivial
                 char chosenCharacter = (char)(Math.round(msgSentCounter % 26) + 65);  // rotate through letters [A-Z]
                 Arrays.fill(payload,(byte)chosenCharacter);  // fill the payload completely with that char
-                messageBuilder.withProperty(MessageProperties.APPLICATION_MESSAGE_ID, UUID.randomUUID().toString());  // as an example of a header
                 OutboundMessage message = messageBuilder.build(payload);  // binary payload message
                 // dynamic topics!!
                 String topicString = new StringBuilder(TOPIC_PREFIX).append("java/pers/pub/").append(chosenCharacter).toString();

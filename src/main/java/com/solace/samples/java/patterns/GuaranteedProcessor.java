@@ -84,7 +84,7 @@ public class GuaranteedProcessor {
                 .build();
         messagingService.connect();  // blocking connect
         messagingService.addServiceInterruptionListener(serviceEvent -> {
-            logger.info("### SERVICE INTERRUPTION: "+serviceEvent.getCause());
+            logger.warn("### SERVICE INTERRUPTION: "+serviceEvent.getCause());
             //isShutdown = true;
         });
         messagingService.addReconnectionAttemptListener(serviceEvent -> {
@@ -168,7 +168,7 @@ public class GuaranteedProcessor {
             Thread.sleep(1000);  // wait 1 second
             System.out.printf("%s %s Received msgs/s: %,d%n",API,SAMPLE_NAME,msgRecvCounter);  // simple way of calculating message rates
             msgRecvCounter = 0;
-            if (hasDetectedRedelivery) {  // try shutting -> enabling the queue on the broker to see this
+            if (hasDetectedRedelivery) {  // try disabling -> enabling the queue on the broker to see this
                 System.out.println("*** Redelivery detected ***");
                 hasDetectedRedelivery = false;  // only show the error once per second
             }

@@ -69,7 +69,7 @@ public class GuaranteedSubscriber {
                 .build();
         messagingService.connect();  // blocking connect
         messagingService.addServiceInterruptionListener(serviceEvent -> {
-            logger.info("### SERVICE INTERRUPTION: "+serviceEvent.getCause());
+            logger.warn("### SERVICE INTERRUPTION: "+serviceEvent.getCause());
             //isShutdown = true;
         });
         messagingService.addReconnectionAttemptListener(serviceEvent -> {
@@ -100,7 +100,7 @@ public class GuaranteedSubscriber {
         	
         }
 
-
+        // asynchronous anonymous receiver message callback
         receiver.receiveAsync(message -> {
         	msgRecvCounter++;
         	if (message.isRedelivered()) {  // useful check
