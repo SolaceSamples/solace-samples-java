@@ -30,6 +30,12 @@ import com.solace.messaging.config.profile.ConfigurationProfile;
 import com.solace.messaging.receiver.PersistentMessageReceiver;
 import com.solace.messaging.resources.Queue;
 
+/**
+ * A sample application showing non-blocking subscriber for Guaranteed messages.
+ * This application assumes a queue named <code>q_java_sub</code> has already been
+ * created for it, and the topic subscription <code>solace/samples/&ast;/pers/></code>
+ * has been added to it. 
+ */
 public class GuaranteedSubscriber {
 
     private static final String SAMPLE_NAME = GuaranteedSubscriber.class.getSimpleName();

@@ -41,6 +41,13 @@ import com.solace.messaging.receiver.PersistentMessageReceiver;
 import com.solace.messaging.resources.Queue;
 import com.solace.messaging.resources.Topic;
 
+/** A sample application that publishes a message for every one that it receives.
+ * Uses a synchronous receiver to block waiting for messages from the broker, and a 
+ * non-blocking publisher to send. It uses a simple helper class to correlate 
+ * successfully published outbound messages before it ACKs the received message.
+ * This application assumes a queue named <code>q_java_proc</code> has already been
+ * created for it, and the topic subscription <code>solace/samples/&ast;/pers/pub/></code>
+ */
 public class GuaranteedProcessor {
 
     private static final String SAMPLE_NAME = GuaranteedProcessor.class.getSimpleName();

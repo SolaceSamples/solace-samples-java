@@ -39,7 +39,9 @@ import com.solace.messaging.resources.Topic;
 
 /**
  * A more performant sample that shows non-blocking
- * guaranteed publishing with asynchronous acknowledgments.
+ * Guaranteed publishing with asynchronous acknowledgments.
+ * It publishes messages on topics.  Receiving applications
+ * should use Queues with topic subscriptions added to them.
  */
 public class GuaranteedNonBlockingPublisher {
     

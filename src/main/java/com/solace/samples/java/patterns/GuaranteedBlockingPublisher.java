@@ -29,6 +29,7 @@ import org.apache.logging.log4j.Logger;
 import com.solace.messaging.MessagingService;
 import com.solace.messaging.PubSubPlusClientException;
 import com.solace.messaging.config.SolaceProperties.AuthenticationProperties;
+import com.solace.messaging.config.SolaceProperties.MessageProperties;
 import com.solace.messaging.config.SolaceProperties.ServiceProperties;
 import com.solace.messaging.config.SolaceProperties.TransportLayerProperties;
 import com.solace.messaging.config.profile.ConfigurationProfile;
@@ -40,6 +41,8 @@ import com.solace.messaging.resources.Topic;
 /**
  * A sample that shows an application that blocks on publish
  * until an acknowledgement has been received from the broker.
+ * It publishes messages on topics.  Receiving applications
+ * should use Queues with topic subscriptions added to them.
  */
 public class GuaranteedBlockingPublisher {
     
@@ -103,9 +106,11 @@ public class GuaranteedBlockingPublisher {
         System.out.println("Publishing to topic '"+ TOPIC_PREFIX + API.toLowerCase() + 
                 "/pers/pub/...', please ensure queue has matching subscription."); 
         byte[] payload = new byte[PAYLOAD_SIZE];  // preallocate memory, for reuse, for performance
+        Properties messageProps = new Properties();
+        messageProps.put(MessageProperties.PERSISTENT_ACK_IMMEDIATELY, "true");  // TODO Remove when v1.1 API comes out
         // block the main thread, waiting for a quit signal
         while (System.in.available() == 0 && !isShutdown) {
-            OutboundMessageBuilder messageBuilder = messagingService.messageBuilder();
+            OutboundMessageBuilder messageBuilder = messagingService.messageBuilder().fromProperties(messageProps);
             try {
                 // each loop, change the payload, less trivial
                 char chosenCharacter = (char)(Math.round(msgSentCounter % 26) + 65);  // rotate through letters [A-Z]
