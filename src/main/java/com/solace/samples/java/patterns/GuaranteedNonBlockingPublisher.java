@@ -100,7 +100,10 @@ public class GuaranteedNonBlockingPublisher {
         // publisher receipt callback, can be called for ACL violations, spool over quota, nobody subscribed to a topic, etc.
         publisher.setMessagePublishReceiptListener(publishReceipt -> {
             final PubSubPlusClientException e = publishReceipt.getException();
-            if (null != e) {  // not good, a NACK
+            if (e == null) {  // no exception, ACK, broker has confirmed receipt
+                OutboundMessage outboundMessage = publishReceipt.getMessage();
+                logger.debug(String.format("ACK for Message %s", outboundMessage));  // good enough, the broker has it now
+            } else {// not good, a NACK
                 Object userContext = publishReceipt.getUserContext();  // optionally set at publish()
                 if (userContext != null) {
                     logger.warn(String.format("NACK for Message %s - %s", userContext, e));
@@ -108,9 +111,6 @@ public class GuaranteedNonBlockingPublisher {
                     OutboundMessage outboundMessage = publishReceipt.getMessage();  // which message got NACKed?
                     logger.warn(String.format("NACK for Message %s - %s", outboundMessage, e));
                 }
-            } else {
-                OutboundMessage outboundMessage = publishReceipt.getMessage();
-                logger.debug(String.format("ACK for Message %s", outboundMessage));  // good enough, the broker has it now
             }
         });
         
@@ -124,7 +124,7 @@ public class GuaranteedNonBlockingPublisher {
         System.out.println("Publishing to topic '"+ TOPIC_PREFIX + API.toLowerCase() + 
                 "/pers/pub/...', please ensure queue has matching subscription."); 
         byte[] payload = new byte[PAYLOAD_SIZE];  // preallocate memory, for reuse, for performance
-        // block the main thread, waiting for a quit signal
+        // loop the main thread, waiting for a quit signal
         while (System.in.available() == 0 && !isShutdown) {
             OutboundMessageBuilder messageBuilder = messagingService.messageBuilder();
             try {

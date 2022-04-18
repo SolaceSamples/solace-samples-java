@@ -59,7 +59,6 @@ public class GuaranteedProcessor {
     
     private static volatile int msgSentCounter = 0;                 // num messages sent
     private static volatile int msgRecvCounter = 0;                 // num messages received
-    private static volatile boolean hasDetectedRedelivery = false;  // detected any messages being redelivered?
     private static volatile boolean isShutdown = false;             // are we done?
 
     // remember to add log4j2.xml to your classpath
@@ -175,10 +174,6 @@ public class GuaranteedProcessor {
             Thread.sleep(1000);  // wait 1 second
             System.out.printf("%s %s Received msgs/s: %,d%n",API,SAMPLE_NAME,msgRecvCounter);  // simple way of calculating message rates
             msgRecvCounter = 0;
-            if (hasDetectedRedelivery) {  // try disabling -> enabling the queue on the broker to see this
-                System.out.println("*** Redelivery detected ***");
-                hasDetectedRedelivery = false;  // only show the error once per second
-            }
         }
         isShutdown = true;
         receiver.terminate(1500L);

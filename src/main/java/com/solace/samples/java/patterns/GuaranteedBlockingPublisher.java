@@ -108,7 +108,7 @@ public class GuaranteedBlockingPublisher {
         byte[] payload = new byte[PAYLOAD_SIZE];  // preallocate memory, for reuse, for performance
         Properties messageProps = new Properties();
         messageProps.put(MessageProperties.PERSISTENT_ACK_IMMEDIATELY, "true");  // TODO Remove when v1.1 API comes out
-        // block the main thread, waiting for a quit signal
+        // loop the main thread, waiting for a quit signal
         while (System.in.available() == 0 && !isShutdown) {
             OutboundMessageBuilder messageBuilder = messagingService.messageBuilder().fromProperties(messageProps);
             try {
@@ -121,7 +121,7 @@ public class GuaranteedBlockingPublisher {
                         .append("/pers/pub/").append(chosenCharacter).toString();
                 try {
                     // send the message
-                    publisher.publishAwaitAcknowledgement(message,Topic.of(topicString),5000L);  // wait up to 5 secs
+                    publisher.publishAwaitAcknowledgement(message,Topic.of(topicString),2000L);  // wait up to 2 seconds?
                     msgSentCounter++;  // add one
                 } catch (PubSubPlusClientException e) {  // could be different types
                     logger.warn(String.format("NACK for Message %s - %s", message, e));

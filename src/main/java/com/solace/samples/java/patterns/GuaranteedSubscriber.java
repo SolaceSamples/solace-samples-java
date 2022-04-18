@@ -127,7 +127,7 @@ public class GuaranteedSubscriber {
             Thread.sleep(1000);  // wait 1 second
             System.out.printf("%s %s Received msgs/s: %,d%n",API,SAMPLE_NAME,msgRecvCounter);  // simple way of calculating message rates
             msgRecvCounter = 0;
-            if (hasDetectedRedelivery) {  // try shutting -> enabling the queue on the broker to see this
+            if (hasDetectedRedelivery) {
                 System.out.println("*** Redelivery detected ***");
                 hasDetectedRedelivery = false;  // only show the error once per second
             }
