@@ -45,7 +45,7 @@ import com.solace.messaging.resources.Topic;
 public class GuaranteedNonBlockingPublisher {
     
     private static final String SAMPLE_NAME = GuaranteedNonBlockingPublisher.class.getSimpleName();
-    private static final String TOPIC_PREFIX = "solace/samples/";  // used as the topic "root"
+    static final String TOPIC_PREFIX = "solace/samples/";  // used as the topic "root"
     private static final String API = "Java";
     private static final int APPROX_MSG_RATE_PER_SEC = 100;
     private static final int PAYLOAD_SIZE = 512;

@@ -17,7 +17,6 @@
 package com.solace.samples.java.patterns;
 
 import java.io.IOException;
-import java.time.Instant;
 import java.util.Properties;
 
 import org.apache.logging.log4j.LogManager;
@@ -30,18 +29,6 @@ import com.solace.messaging.config.SolaceProperties.TransportLayerProperties;
 import com.solace.messaging.config.profile.ConfigurationProfile;
 import com.solace.messaging.receiver.PersistentMessageReceiver;
 import com.solace.messaging.resources.Queue;
-import com.solace.messaging.resources.TopicSubscription;
-import com.solacesystems.jcsmp.BytesXMLMessage;
-import com.solacesystems.jcsmp.ConsumerFlowProperties;
-import com.solacesystems.jcsmp.FlowEventArgs;
-import com.solacesystems.jcsmp.FlowEventHandler;
-import com.solacesystems.jcsmp.FlowReceiver;
-import com.solacesystems.jcsmp.JCSMPErrorResponseException;
-import com.solacesystems.jcsmp.JCSMPException;
-import com.solacesystems.jcsmp.JCSMPFactory;
-import com.solacesystems.jcsmp.JCSMPProperties;
-import com.solacesystems.jcsmp.JCSMPTransportException;
-import com.solacesystems.jcsmp.XMLMessageListener;
 
 public class GuaranteedSubscriber {
 
@@ -52,13 +39,12 @@ public class GuaranteedSubscriber {
     private static volatile int msgRecvCounter = 0;                 // num messages received
     private static volatile boolean hasDetectedRedelivery = false;  // detected any messages being redelivered?
     private static volatile boolean isShutdown = false;             // are we done?
-    private static FlowReceiver flowQueueReceiver;
 
     // remember to add log4j2.xml to your classpath
     private static final Logger logger = LogManager.getLogger();  // log4j2, but could also use SLF4J, JCL, etc.
 
     /** This is the main app.  Use this type of app for receiving Guaranteed messages (e.g. via a queue endpoint). */
-    public static void main(String... args) throws JCSMPException, InterruptedException, IOException {
+    public static void main(String... args) throws InterruptedException, IOException {
         if (args.length < 3) {  // Check command line arguments
             System.out.printf("Usage: %s <host:port> <message-vpn> <client-username> [password]%n%n", SAMPLE_NAME);
             System.exit(-1);
@@ -73,6 +59,7 @@ public class GuaranteedSubscriber {
             properties.setProperty(AuthenticationProperties.SCHEME_BASIC_PASSWORD, args[3]);  // client-password
         }
         //properties.setProperty(JCSMPProperties.GENERATE_SEQUENCE_NUMBERS, true);  // not required, but interesting
+        
         properties.setProperty(TransportLayerProperties.RECONNECTION_ATTEMPTS, "20");  // recommended settings
         properties.setProperty(TransportLayerProperties.CONNECTION_RETRIES_PER_HOST, "5");
         // https://docs.solace.com/Solace-PubSub-Messaging-APIs/API-Developer-Guide/Configuring-Connection-T.htm
@@ -91,31 +78,27 @@ public class GuaranteedSubscriber {
         messagingService.addReconnectionListener(serviceEvent -> {
             logger.info("### RECONNECTED: "+serviceEvent);
         });
-        
-        
+
+        // this receiver assumes the queue is already existing and has a topic subscription mapped to it
+        // if not, first create queue with PubSub+Manager, or SEMP management API
         final PersistentMessageReceiver receiver = messagingService
                 .createPersistentMessageReceiverBuilder()
-                // add the subscription to it, but don't try to automatically create the queue
-                .withSubscriptions(TopicSubscription.of(GuaranteedNonBlockingPublisher.TOPIC_PREFIX+"pers/>"))
-                // use convenience static factory Queues to create durable exclusive queue
                 .build(Queue.durableExclusiveQueue(QUEUE_NAME)).start();
 
-        receiver.receiveAsync((message) -> {
-          // do something with my message, i.e check if it is not expired
-          if (message != null && Instant.now().toEpochMilli() > message.getExpiration() &&
-              message.getPayloadAsBytes() != null) {
-            //and do ack
-            receiver.ack(message);
-          }
-
+        receiver.receiveAsync(message -> {
+        	msgRecvCounter++;
+        	if (message.isRedelivered()) {  // useful check
+                // this is the broker telling the consumer that this message has been sent and not ACKed before.
+                // this can happen if an exception is thrown, or the broker restarts, or the network disconnects
+                // perhaps an error in processing? Should do extra checks to avoid duplicate processing
+                hasDetectedRedelivery = true;
+        	}
+            // Messages are removed from the broker queue when the ACK is received.
+            // Therefore, DO NOT ACK until all processing/storing of this message is complete.
+            // NOTE that messages can be acknowledged from any thread.
+        	receiver.ack(message);  // ACKs are asynchronous
         });
 
-        
-
-
-            
-        // tell the broker to start sending messages on this queue receiver
-        flowQueueReceiver.start();
         // async queue receive working now, so time to wait until done...
         System.out.println(SAMPLE_NAME + " connected, and running. Press [ENTER] to quit.");
         while (System.in.available() == 0 && !isShutdown) {
@@ -128,42 +111,10 @@ public class GuaranteedSubscriber {
             }
         }
         isShutdown = true;
-        flowQueueReceiver.stop();
+        receiver.terminate(1500L);
         Thread.sleep(1000);
-        session.closeSession();  // will also close consumer object
+        messagingService.disconnect();
         System.out.println("Main thread quitting.");
     }
 
-    ////////////////////////////////////////////////////////////////////////////
-
-    /** Very simple static inner class, used for receives messages from Queue Flows. **/
-    private static class QueueFlowListener implements XMLMessageListener {
-
-        @Override
-        public void onReceive(BytesXMLMessage msg) {
-            msgRecvCounter++;
-            if (msg.getRedelivered()) {  // useful check
-                // this is the broker telling the consumer that this message has been sent and not ACKed before.
-                // this can happen if an exception is thrown, or the broker restarts, or the netowrk disconnects
-                // perhaps an error in processing? Should do extra checks to avoid duplicate processing
-                hasDetectedRedelivery = true;
-            }
-            // Messages are removed from the broker queue when the ACK is received.
-            // Therefore, DO NOT ACK until all processing/storing of this message is complete.
-            // NOTE that messages can be acknowledged from a different thread.
-            msg.ackMessage();  // ACKs are asynchronous
-        }
-
-        @Override
-        public void onException(JCSMPException e) {
-            logger.warn("### Queue " + QUEUE_NAME + " Flow handler received exception.  Stopping!!", e);
-            if (e instanceof JCSMPTransportException) {  // all reconnect attempts failed
-                isShutdown = true;  // let's quit; or, could initiate a new connection attempt
-            } else {
-                // Generally unrecoverable exception, probably need to recreate and restart the flow
-                flowQueueReceiver.close();
-                // add logic in main thread to restart FlowReceiver, or can exit the program
-            }
-        }
-    }
 }
