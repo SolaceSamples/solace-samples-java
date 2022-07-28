@@ -8,6 +8,8 @@ build
 .settings/
 bin/
 lib/
+target/
 
 # Ignore VSCode settings folder
 .vscode/
+
