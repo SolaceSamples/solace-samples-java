@@ -1,17 +1,21 @@
-name: Reminder to check tutorials
-
+name: PR Comment
 on:
-  pull_request_target: 
-    branches: [ main ]
+  pull_request:
 
 jobs:
   pr-comment:
-    name: Alert to check if code change is referenced in tutorials
+    name: Add guidelines comment
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@master
-      - uses: harupy/comment-on-pr@master
-        env:
-          GITHUB_TOKEN: ${{ secrets.SOLACE_BOT }}
+      - uses: mshick/add-pr-comment@v1
         with:
-          filename: comment-content.md
+          message: |
+            Hi there! 👋
+
+            Thanks for your PR. Please check if your code changes in this PR are references on https://tutorials.solace.dev/
+
+            If they are, please update:
+
+            1. The commit number in the [gatsby-config.js](https://github.com/SolaceDev/solace-dev-tutorials/blob/master/gatsby-config.js) file
+            1. Update the lines of code referenced in `src/pages/tutorials/{language}/{tutorial.md}` file in the `embed:{Lang}-Samples/{path/to/file}#L{start_line}-{end_line}` section
+          repo-token: ${{ secrets.SOLACE_BOT }}
