@@ -1,0 +1,17 @@
+name: Reminder to check tutorials
+
+on:
+  pull_request_target: 
+    branches: [ master ]
+
+jobs:
+  pr-comment:
+    name: Alert to check if code change is referenced in tutorials
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@master
+      - uses: harupy/comment-on-pr@master
+        env:
+          GITHUB_TOKEN: ${{ secrets.SOLACE_BOT }}
+        with:
+          filename: comment-content.md
