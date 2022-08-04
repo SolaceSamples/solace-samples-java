@@ -95,7 +95,7 @@ public class DirectProcessor {
         
         // build the Direct receiver object
         final DirectMessageReceiver receiver = messagingService.createDirectMessageReceiverBuilder()
-                .withSubscriptions(TopicSubscription.of(TOPIC_PREFIX+"*/direct/pub/>"))
+                .withSubscriptions(TopicSubscription.of(TOPIC_PREFIX+"*/TAMIMI/YOLOS/>"))
                 // add more subscriptions here if you want
                 .build();
         receiver.start();
