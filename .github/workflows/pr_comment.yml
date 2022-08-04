@@ -2,7 +2,8 @@ on:
   pull_request:
 
 jobs:
-  test:
+  pr-comment:
+    name: Alert to check tutorials 
     runs-on: ubuntu-latest
     steps:
       - uses: mshick/add-pr-comment@v1
