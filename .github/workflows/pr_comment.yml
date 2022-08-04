@@ -1,15 +1,13 @@
-name: PR Comment
 on:
   pull_request:
 
 jobs:
-  pr-comment:
-    name: Add guidelines comment
+  test:
     runs-on: ubuntu-latest
     steps:
       - uses: mshick/add-pr-comment@v1
         with:
-          message: |
+          message: |  
             Hi there! 👋
 
             Thanks for your PR. Please check if your code changes in this PR are references on https://tutorials.solace.dev/
