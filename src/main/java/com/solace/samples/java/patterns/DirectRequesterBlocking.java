@@ -32,6 +32,7 @@ public class DirectRequesterBlocking {
     private static final int APPROX_MSG_RATE_PER_SEC = 100;
     private static final int PAYLOAD_SIZE = 100;
     private static volatile int msgSentCounter = 0;  // num messages sent
+    private static volatile int loopCounter = 0;
     private static volatile boolean isShutdown = false;
     private static final long TIME_OUT_IN_MILLIS = 10000;
 
@@ -68,11 +69,10 @@ public class DirectRequesterBlocking {
         //7. Create the builder for the OutboundMessage
         final OutboundMessageBuilder messageBuilder = messagingService.messageBuilder();
 
-        while (!isShutdown) {
+        while (System.in.available() == 0 && !isShutdown) {
             try {
-
                 //8. Create the payload for each run of the loop
-                char chosenCharacter = (char) (Math.round(msgSentCounter % 26) + 65);  // rotate through letters [A-Z]
+                char chosenCharacter = (char) (Math.round(loopCounter % 26) + 65);  // rotate through letters [A-Z]
                 payloadInString = createMessagePayload(payload, chosenCharacter);
 
                 //9. Create the OutboundMessage message with new payload, messageId and correlationId.
@@ -81,16 +81,18 @@ public class DirectRequesterBlocking {
                 //10. Define the topic name where the message will be posted.
                 // This example defines a dynamic topic for each message to showcase Solace capability of wildcard based topics
                 // In cases where dynamic topics names are not required, a simple topic string can be used
-                final String topicString = new StringBuilder(TOPIC_PREFIX).append(API.toLowerCase()).append("/direct/pub/").append(chosenCharacter).toString();  // StringBuilder faster than +
+                final String topicString = new StringBuilder(TOPIC_PREFIX).append(API.toLowerCase()).append("/direct/request/").append(chosenCharacter).toString();  // StringBuilder faster than +
 
                 System.out.println("The outbound message being published is : " + outboundMessage.getPayloadAsString());
 
                 //11. Publishes the message in a blocking manner.
                 // The API expects back a reply message from the Replier defined in the DirectReplierBlocking.java which is passed back in the InboundMessage object.
                 final InboundMessage inboundMessage = requestReplyMessagePublisher.publishAwaitResponse(outboundMessage, Topic.of(topicString), TIME_OUT_IN_MILLIS);
-                System.out.println("The reply inboundMessage being logged is : " + inboundMessage.getPayloadAsString());
+                System.out.println("The reply inboundMessage being logged is : " + inboundMessage.dump());
+                System.out.println("The reply inboundMessage payload being logged is : " + inboundMessage.getPayloadAsString());
 
                 msgSentCounter++;  // increment by one
+                loopCounter++;     // increment by one
 
             } catch (final RuntimeException | InterruptedException runtimeException) {
                 System.out.printf("### Caught while trying to publisher.publish(): %s%n", runtimeException);

@@ -50,7 +50,7 @@ public class DirectReplierBlocking {
 
         //5. Build and start the Receiver object
         RequestReplyMessageReceiver requestReplyMessageReceiver = messagingService.requestReply().
-                createRequestReplyMessageReceiverBuilder().build(TopicSubscription.of(TOPIC_PREFIX + "*/direct/>"));
+                createRequestReplyMessageReceiverBuilder().build(TopicSubscription.of(TOPIC_PREFIX + "*/direct/request/>"));
         requestReplyMessageReceiver.start();
         //5-A. Setup an event handler for situations where the reply message could not be published.
         requestReplyMessageReceiver.setReplyFailureListener(failedReceiveEvent -> System.out.println("### FAILED RECEIVE EVENT " + failedReceiveEvent));
@@ -67,6 +67,7 @@ public class DirectReplierBlocking {
             checkForDiscardedMessages(inboundMessage);
 
             //This SOP is just for demo purposes, ideally considering the slow nature of console I/O, any such action should be avoided in message processing
+            System.out.println("The inbound message is : " + inboundMessage.dump());
             System.out.println("The inbound message payload is : " + inboundMessage.getPayloadAsString());
             System.out.println("The inbound message APPLICATION_MESSAGE_ID is : " + inboundMessage.getProperty(SolaceProperties.MessageProperties.APPLICATION_MESSAGE_ID));
             System.out.println("The inbound message CORRELATION_ID is : " + inboundMessage.getProperty(SolaceProperties.MessageProperties.CORRELATION_ID));
@@ -79,6 +80,7 @@ public class DirectReplierBlocking {
             final OutboundMessage outboundMessage = outboundMessageBuilder
                     .withProperty(SolaceProperties.MessageProperties.APPLICATION_MESSAGE_ID, inboundMessage.getProperty(SolaceProperties.MessageProperties.APPLICATION_MESSAGE_ID))
                     .withProperty(SolaceProperties.MessageProperties.CORRELATION_ID, inboundMessage.getProperty(SolaceProperties.MessageProperties.CORRELATION_ID))
+
                     .build(outboundMessageStringPayload.toString());
 
             //This SOP is just for demo purposes, ideally considering the slow nature of console I/O, any such action should be avoided in message processing
