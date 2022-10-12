@@ -31,8 +31,10 @@ public class DirectReplierBlocking {
     public static void main(String... args) throws IOException {
 
         //1. Make sure that you have all the connection parameters.
-        validateStartupParameters(args);
-
+        if (args.length < 3) {  // Check command line arguments
+            System.out.printf("Usage: %s <host:port> <message-vpn> <client-username> [password]%n%n", SAMPLE_NAME);
+            System.exit(-1);
+        }
         System.out.println(API + " " + SAMPLE_NAME + " initializing...");
 
         //2. Set up the properties including username, password, vpnHostUrl and other control parameters.
@@ -67,20 +69,17 @@ public class DirectReplierBlocking {
             checkForDiscardedMessages(inboundMessage);
 
             //This SOP is just for demo purposes, ideally considering the slow nature of console I/O, any such action should be avoided in message processing
-            System.out.println("The inbound message is : " + inboundMessage.dump());
+//            System.out.println("The inbound message is : " + inboundMessage.dump()); // Enable this for learning purposes as it logs a String representation of the whole Message
             System.out.println("The inbound message payload is : " + inboundMessage.getPayloadAsString());
             System.out.println("The inbound message APPLICATION_MESSAGE_ID is : " + inboundMessage.getProperty(SolaceProperties.MessageProperties.APPLICATION_MESSAGE_ID));
-            System.out.println("The inbound message CORRELATION_ID is : " + inboundMessage.getProperty(SolaceProperties.MessageProperties.CORRELATION_ID));
 
             //7-B. Create the outbound message payload.
-            StringBuilder outboundMessageStringPayload = new StringBuilder().append("Replying to message received on topic: ").append(inboundMessage.getDestinationName())
-                    .append(" with correlation id :").append(inboundMessage.getProperty(SolaceProperties.MessageProperties.CORRELATION_ID));
+            StringBuilder outboundMessageStringPayload = new StringBuilder().append("Hello! Here is a response to your message on topic : ").append(inboundMessage.getDestinationName())
+                    .append(" with application-message-id id :").append(inboundMessage.getProperty(SolaceProperties.MessageProperties.APPLICATION_MESSAGE_ID));
 
             //7-C. Create the outbound message with headers and payload.
             final OutboundMessage outboundMessage = outboundMessageBuilder
                     .withProperty(SolaceProperties.MessageProperties.APPLICATION_MESSAGE_ID, inboundMessage.getProperty(SolaceProperties.MessageProperties.APPLICATION_MESSAGE_ID))
-                    .withProperty(SolaceProperties.MessageProperties.CORRELATION_ID, inboundMessage.getProperty(SolaceProperties.MessageProperties.CORRELATION_ID))
-
                     .build(outboundMessageStringPayload.toString());
 
             //This SOP is just for demo purposes, ideally considering the slow nature of console I/O, any such action should be avoided in message processing
@@ -92,33 +91,19 @@ public class DirectReplierBlocking {
 
         //8. Loop to identify message discards or errors and terminate if required. This should be handled in a more resilient manner
         System.out.println(API + " " + SAMPLE_NAME + " connected, and running.");
-        try {
-            while (System.in.available() == 0 && !isShutdown) {
-                requestReplyMessageReceiver.receiveMessage(messageHandler);
-                Thread.sleep(1000);  // wait 1 second
-                System.out.printf("Received msgs/s: %,d%n", msgRecvCounter);  // simple way of calculating message rates
-                msgRecvCounter = 0;
-                if (hasDetectedDiscard) {
-                    System.out.println("*** Egress discard detected *** : "
-                            + SAMPLE_NAME + " unable to keep up with full message rate");
-                    hasDetectedDiscard = false;  // only show the error once per second
-                }
+        while (System.in.available() == 0 && !isShutdown) {
+            requestReplyMessageReceiver.receiveMessage(messageHandler, 1000);
+            System.out.printf("Received msgs/s: %,d%n", msgRecvCounter);  // simple way of calculating message rates
+            if (hasDetectedDiscard) {
+                System.out.println("*** Egress discard detected *** : "
+                        + SAMPLE_NAME + " unable to keep up with full message rate");
+                hasDetectedDiscard = false;  // only show the error once per second
             }
-        } catch (InterruptedException e) {
-            // Do more subtle and elegant handling for production code.
-            // Thread.sleep() interrupted... probably getting shut down
         }
         isShutdown = true;
         requestReplyMessageReceiver.terminate(500);
         messagingService.disconnect();
         System.out.println("Main thread quitting.");
-    }
-
-    private static void validateStartupParameters(final String... args) {
-        if (args.length < 3) {  // Check command line arguments
-            System.out.printf("Usage: %s <host:port> <message-vpn> <client-username> [password]%n%n", SAMPLE_NAME);
-            System.exit(-1);
-        }
     }
 
     private static void setupPropertiesForConnection(final Properties properties, final String... args) {
