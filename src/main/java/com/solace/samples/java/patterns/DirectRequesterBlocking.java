@@ -19,6 +19,8 @@ import java.util.UUID;
  * The mechanism of the Request-Reply pattern is defined in more detail over here : <a href="https://tutorials.solace.dev/jcsmp/request-reply/">Solace Request/Reply pattern</a>
  * <p>
  * Refer to the DirectReplierBlocking class for the reply component of the flow.
+ * Run the DirectReplierBlocking class before executing the requester to make sure that the outbound message is acknowledge and replied
+ * in a timely manner
  */
 public class DirectRequesterBlocking {
 

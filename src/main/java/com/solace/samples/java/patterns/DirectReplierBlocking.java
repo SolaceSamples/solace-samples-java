@@ -42,17 +42,14 @@ public class DirectReplierBlocking {
         setupPropertiesForConnection(properties, args);
 
         //3. Create the MessagingService object and establishes the connection with the Solace event broker
-        final MessagingService messagingService = com.solace.messaging.MessagingService.builder(ConfigurationProfile.V1)
-                .fromProperties(properties)
-                .build();
+        final MessagingService messagingService = com.solace.messaging.MessagingService.builder(ConfigurationProfile.V1).fromProperties(properties).build();
         messagingService.connect();  // blocking connect to the broker
 
         //4. Register event handlers and callbacks for connection error handling.
         setupConnectivityHandlingInMessagingService(messagingService);
 
         //5. Build and start the Receiver object
-        RequestReplyMessageReceiver requestReplyMessageReceiver = messagingService.requestReply().
-                createRequestReplyMessageReceiverBuilder().build(TopicSubscription.of(TOPIC_PREFIX + "*/direct/request/>"));
+        RequestReplyMessageReceiver requestReplyMessageReceiver = messagingService.requestReply().createRequestReplyMessageReceiverBuilder().build(TopicSubscription.of(TOPIC_PREFIX + "*/direct/request/>"));
         requestReplyMessageReceiver.start();
         //5-A. Setup an event handler for situations where the reply message could not be published.
         requestReplyMessageReceiver.setReplyFailureListener(failedReceiveEvent -> System.out.println("### FAILED RECEIVE EVENT " + failedReceiveEvent));
@@ -70,17 +67,20 @@ public class DirectReplierBlocking {
 
             //This SOP is just for demo purposes, ideally considering the slow nature of console I/O, any such action should be avoided in message processing
 //            System.out.println("The inbound message is : " + inboundMessage.dump()); // Enable this for learning purposes as it logs a String representation of the whole Message
-            System.out.println("The inbound message payload is : " + inboundMessage.getPayloadAsString());
+            // It is always advisable to process your inbound message payload as bytes and convert to the required output format.
+            final String stringPayload = inboundMessage.getAndConvertPayload(
+                    (byte[] bytes) -> {
+                        return new String(bytes);
+                    }, String.class
+            );
+            System.out.println("The converted message payload is : " + stringPayload);
             System.out.println("The inbound message APPLICATION_MESSAGE_ID is : " + inboundMessage.getProperty(SolaceProperties.MessageProperties.APPLICATION_MESSAGE_ID));
 
             //7-B. Create the outbound message payload.
-            StringBuilder outboundMessageStringPayload = new StringBuilder().append("Hello! Here is a response to your message on topic : ").append(inboundMessage.getDestinationName())
-                    .append(" with application-message-id id :").append(inboundMessage.getProperty(SolaceProperties.MessageProperties.APPLICATION_MESSAGE_ID));
+            StringBuilder outboundMessageStringPayload = new StringBuilder().append("Hello! Here is a response to your message on topic : ").append(inboundMessage.getDestinationName()).append(" with application-message-id id :").append(inboundMessage.getProperty(SolaceProperties.MessageProperties.APPLICATION_MESSAGE_ID));
 
             //7-C. Create the outbound message with headers and payload.
-            final OutboundMessage outboundMessage = outboundMessageBuilder
-                    .withProperty(SolaceProperties.MessageProperties.APPLICATION_MESSAGE_ID, inboundMessage.getProperty(SolaceProperties.MessageProperties.APPLICATION_MESSAGE_ID))
-                    .build(outboundMessageStringPayload.toString());
+            final OutboundMessage outboundMessage = outboundMessageBuilder.withProperty(SolaceProperties.MessageProperties.APPLICATION_MESSAGE_ID, inboundMessage.getProperty(SolaceProperties.MessageProperties.APPLICATION_MESSAGE_ID)).build(outboundMessageStringPayload.toString());
 
             //This SOP is just for demo purposes, ideally considering the slow nature of console I/O, any such action should be avoided in message processing
             System.out.println("The outbound message is : " + outboundMessage.getPayloadAsString());
@@ -95,8 +95,7 @@ public class DirectReplierBlocking {
             requestReplyMessageReceiver.receiveMessage(messageHandler, 1000);
             System.out.printf("Received msgs/s: %,d%n", msgRecvCounter);  // simple way of calculating message rates
             if (hasDetectedDiscard) {
-                System.out.println("*** Egress discard detected *** : "
-                        + SAMPLE_NAME + " unable to keep up with full message rate");
+                System.out.println("*** Egress discard detected *** : " + SAMPLE_NAME + " unable to keep up with full message rate");
                 hasDetectedDiscard = false;  // only show the error once per second
             }
         }
@@ -129,8 +128,7 @@ public class DirectReplierBlocking {
     }
 
     private static void checkForDiscardedMessages(final InboundMessage inboundMessage) {
-        if (inboundMessage.getMessageDiscardNotification().hasBrokerDiscardIndication() ||
-                inboundMessage.getMessageDiscardNotification().hasInternalDiscardIndication()) {
+        if (inboundMessage.getMessageDiscardNotification().hasBrokerDiscardIndication() || inboundMessage.getMessageDiscardNotification().hasInternalDiscardIndication()) {
             // If the consumer is being over-driven (i.e. publish rates too high), the broker might discard some messages for this consumer
             // check this flag to know if that's happened
             // to avoid discards:
