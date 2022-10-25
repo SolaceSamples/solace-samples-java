@@ -83,7 +83,7 @@ def scripts = [
         'GuaranteedSubscriber'          : 'com.solace.samples.java.patterns.GuaranteedSubscriber',
         'GuaranteedProcessor'           : 'com.solace.samples.java.patterns.GuaranteedProcessor',
         'DirectReplierBlocking'         : 'com.solace.samples.java.patterns.DirectReplierBlocking',
-        'DirectRequesterBlocking'       : 'com.solace.samples.java.patterns.DirectRequesterBlocking'
+        'DirectRequestorBlocking': 'com.solace.samples.java.patterns.DirectRequestorBlocking'
 ]
 scripts.each() { scriptName, className ->
     def t = tasks.create(name: scriptName+'StartScript', type: CreateStartScripts) {

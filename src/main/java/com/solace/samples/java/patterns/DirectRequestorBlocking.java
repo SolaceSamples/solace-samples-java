@@ -1,6 +1,7 @@
 package com.solace.samples.java.patterns;
 
 import com.solace.messaging.MessagingService;
+import com.solace.messaging.PubSubPlusClientException;
 import com.solace.messaging.config.SolaceProperties;
 import com.solace.messaging.config.profile.ConfigurationProfile;
 import com.solace.messaging.publisher.OutboundMessage;
@@ -11,7 +12,6 @@ import com.solace.messaging.resources.Topic;
 
 import java.io.IOException;
 import java.util.Properties;
-import java.util.UUID;
 
 /**
  * This class demonstrates the usage of the Solace Java API to create a Requester class.
@@ -19,15 +19,13 @@ import java.util.UUID;
  * The mechanism of the Request-Reply pattern is defined in more detail over here : <a href="https://tutorials.solace.dev/jcsmp/request-reply/">Solace Request/Reply pattern</a>
  * <p>
  * Refer to the DirectReplierBlocking class for the reply component of the flow.
- * Run the DirectReplierBlocking class before executing the requester to make sure that the outbound message is acknowledge and replied
- * in a timely manner
  */
-public class DirectRequesterBlocking {
+public class DirectRequestorBlocking {
 
-    private static final String SAMPLE_NAME = DirectRequesterBlocking.class.getSimpleName();
+    private static final String SAMPLE_NAME = DirectRequestorBlocking.class.getSimpleName();
     private static final String TOPIC_PREFIX = "solace/samples/";  // used as the topic "root"
     private static final String API = "Java";
-    private static final long REQUEST_TIMEOUT_MS = 10000;
+    private static final long REQUEST_TIMEOUT_MS = 3000;
     private static volatile int loopCounter = 0;
     private static volatile boolean isShutdown = false;
 
@@ -72,7 +70,7 @@ public class DirectRequesterBlocking {
                 //9. Define the topic name where the message will be posted.
                 // This example defines a dynamic topic for each message to showcase Solace capability of wildcard based topics
                 // In cases where dynamic topics names are not required, a simple topic string can be used
-                final String topicString = new StringBuilder(TOPIC_PREFIX).append(API.toLowerCase()).append("/direct/request/").append(loopCounter).toString();  // StringBuilder faster than +
+                final String topicString = new StringBuilder(TOPIC_PREFIX).append(API.toLowerCase()).append("/direct/request").toString();  // StringBuilder faster than +
 
                 System.out.println("The outbound message being published is : " + outboundMessage.getPayloadAsString());
 
@@ -84,8 +82,13 @@ public class DirectRequesterBlocking {
 
                 loopCounter++;     // increment by one
 
+            } catch (final PubSubPlusClientException.TimeoutException timeoutException) {
+                // This handles the situation that the requester application did not receive a reply for the published message within the specified timeout.
+                // This would be a good location for implementing resiliency or retry mechanisms.
+                System.out.printf("Publishing action timed out without any reply. Error : : %s%n", timeoutException);
+                loopCounter++;
             } catch (final RuntimeException | InterruptedException runtimeException) {
-                System.out.printf("### Caught while trying to publisher.publish(): %s%n", runtimeException);
+                System.out.printf("### Caught while trying to publisher.publishAwaitResponse(): %s%n", runtimeException);
                 isShutdown = true;  // or try to handle the specific exception more gracefully
             } finally {
                 try {
@@ -124,8 +127,7 @@ public class DirectRequesterBlocking {
     }
 
     private static OutboundMessage createOutboundMessageForPublishing(final OutboundMessageBuilder messageBuilder, final String payloadString) {
-        final String header_id = UUID.randomUUID().toString();
-        messageBuilder.withProperty(SolaceProperties.MessageProperties.APPLICATION_MESSAGE_ID, header_id);  // as an example of a header
+        // Its possible to add in application properties on the message as required.
         return messageBuilder.build(payloadString);  // binary payload message
     }
 }

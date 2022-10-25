@@ -5,7 +5,6 @@ import com.solace.messaging.config.SolaceProperties;
 import com.solace.messaging.config.profile.ConfigurationProfile;
 import com.solace.messaging.publisher.OutboundMessage;
 import com.solace.messaging.publisher.OutboundMessageBuilder;
-import com.solace.messaging.receiver.InboundMessage;
 import com.solace.messaging.receiver.RequestReplyMessageReceiver;
 import com.solace.messaging.resources.TopicSubscription;
 
@@ -17,14 +16,13 @@ import java.util.Properties;
  * This implementation focuses on the blocking behaviour of the API.
  * The mechanism of the Request-Reply pattern is defined in more detail over here : <a href="https://tutorials.solace.dev/jcsmp/request-reply/">Solace Request/Reply pattern</a>
  * <p>
- * Refer to the DirectRequesterBlocking class for the request component of the flow.
+ * Refer to the DirectRequestorBlocking class for the request component of the flow.
  */
 public class DirectReplierBlocking {
 
     private static final String SAMPLE_NAME = DirectReplierBlocking.class.getSimpleName();
     private static final String TOPIC_PREFIX = "solace/samples/";  // used as the topic "root"
     private static final String API = "Java";
-    private static volatile int msgRecvCounter = 0;                   // num messages sent
     private static volatile boolean hasDetectedDiscard = false;  // detected any discards yet?
     private static volatile boolean isShutdown = false;          // are we done yet?
 
@@ -49,9 +47,9 @@ public class DirectReplierBlocking {
         setupConnectivityHandlingInMessagingService(messagingService);
 
         //5. Build and start the Receiver object
-        RequestReplyMessageReceiver requestReplyMessageReceiver = messagingService.requestReply().createRequestReplyMessageReceiverBuilder().build(TopicSubscription.of(TOPIC_PREFIX + "*/direct/request/>"));
+        RequestReplyMessageReceiver requestReplyMessageReceiver = messagingService.requestReply().createRequestReplyMessageReceiverBuilder().build(TopicSubscription.of(TOPIC_PREFIX + "*/direct/request"));
         requestReplyMessageReceiver.start();
-        //5-A. Setup an event handler for situations where the reply message could not be published.
+        //5-A. Set up an event handler for situations where the reply message could not be published.
         requestReplyMessageReceiver.setReplyFailureListener(failedReceiveEvent -> System.out.println("### FAILED RECEIVE EVENT " + failedReceiveEvent));
 
         //6. Create an OutboundMessageBuilder for building the outbound reply message
@@ -60,27 +58,16 @@ public class DirectReplierBlocking {
         //7. Define the handler for the incoming message.
         final RequestReplyMessageReceiver.RequestMessageHandler messageHandler = (inboundMessage, replier) -> {
 
-            msgRecvCounter++;
-
-            //7-A. Since Direct messages, check if there have been any lost any messages
-            checkForDiscardedMessages(inboundMessage);
-
             //This SOP is just for demo purposes, ideally considering the slow nature of console I/O, any such action should be avoided in message processing
-//            System.out.println("The inbound message is : " + inboundMessage.dump()); // Enable this for learning purposes as it logs a String representation of the whole Message
-            // It is always advisable to process your inbound message payload as bytes and convert to the required output format.
-            final String stringPayload = inboundMessage.getAndConvertPayload(
-                    (byte[] bytes) -> {
-                        return new String(bytes);
-                    }, String.class
-            );
+//          System.out.println("The inbound message is : " + inboundMessage.dump()); // Enable this for learning purposes as it logs a String representation of the whole Message
+            final String stringPayload = inboundMessage.getPayloadAsString();
             System.out.println("The converted message payload is : " + stringPayload);
-            System.out.println("The inbound message APPLICATION_MESSAGE_ID is : " + inboundMessage.getProperty(SolaceProperties.MessageProperties.APPLICATION_MESSAGE_ID));
 
             //7-B. Create the outbound message payload.
-            StringBuilder outboundMessageStringPayload = new StringBuilder().append("Hello! Here is a response to your message on topic : ").append(inboundMessage.getDestinationName()).append(" with application-message-id id :").append(inboundMessage.getProperty(SolaceProperties.MessageProperties.APPLICATION_MESSAGE_ID));
+            final StringBuilder outboundMessageStringPayload = new StringBuilder().append("Hello! Here is a response to your message on topic : ").append(inboundMessage.getDestinationName()).append(" with incoming payload :").append(stringPayload);
 
             //7-C. Create the outbound message with headers and payload.
-            final OutboundMessage outboundMessage = outboundMessageBuilder.withProperty(SolaceProperties.MessageProperties.APPLICATION_MESSAGE_ID, inboundMessage.getProperty(SolaceProperties.MessageProperties.APPLICATION_MESSAGE_ID)).build(outboundMessageStringPayload.toString());
+            final OutboundMessage outboundMessage = outboundMessageBuilder.build(outboundMessageStringPayload.toString());
 
             //This SOP is just for demo purposes, ideally considering the slow nature of console I/O, any such action should be avoided in message processing
             System.out.println("The outbound message is : " + outboundMessage.getPayloadAsString());
@@ -93,7 +80,6 @@ public class DirectReplierBlocking {
         System.out.println(API + " " + SAMPLE_NAME + " connected, and running.");
         while (System.in.available() == 0 && !isShutdown) {
             requestReplyMessageReceiver.receiveMessage(messageHandler, 1000);
-            System.out.printf("Received msgs/s: %,d%n", msgRecvCounter);  // simple way of calculating message rates
             if (hasDetectedDiscard) {
                 System.out.println("*** Egress discard detected *** : " + SAMPLE_NAME + " unable to keep up with full message rate");
                 hasDetectedDiscard = false;  // only show the error once per second
@@ -125,17 +111,5 @@ public class DirectReplierBlocking {
         });
         messagingService.addReconnectionAttemptListener(serviceEvent -> System.out.println("### RECONNECTING ATTEMPT: " + serviceEvent));
         messagingService.addReconnectionListener(serviceEvent -> System.out.println("### RECONNECTED: " + serviceEvent));
-    }
-
-    private static void checkForDiscardedMessages(final InboundMessage inboundMessage) {
-        if (inboundMessage.getMessageDiscardNotification().hasBrokerDiscardIndication() || inboundMessage.getMessageDiscardNotification().hasInternalDiscardIndication()) {
-            // If the consumer is being over-driven (i.e. publish rates too high), the broker might discard some messages for this consumer
-            // check this flag to know if that's happened
-            // to avoid discards:
-            //  a) reduce publish rate
-            //  b) use multiple-threads or shared subscriptions for parallel processing
-            //  c) increase size of consumer's D-1 egress buffers (check client-profile) (helps more with bursts)
-            hasDetectedDiscard = true;  // set my own flag
-        }
     }
 }
