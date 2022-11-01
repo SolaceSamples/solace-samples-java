@@ -16,17 +16,9 @@
 
 package com.solace.samples.java.patterns;
 
-import java.io.IOException;
-import java.util.Properties;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
-
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
 import com.solace.messaging.MessagingService;
 import com.solace.messaging.PubSubPlusClientException;
+import com.solace.messaging.config.SolaceProperties;
 import com.solace.messaging.config.SolaceProperties.AuthenticationProperties;
 import com.solace.messaging.config.SolaceProperties.ServiceProperties;
 import com.solace.messaging.config.SolaceProperties.TransportLayerProperties;
@@ -40,6 +32,14 @@ import com.solace.messaging.receiver.InboundMessage;
 import com.solace.messaging.receiver.PersistentMessageReceiver;
 import com.solace.messaging.resources.Queue;
 import com.solace.messaging.resources.Topic;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import java.io.IOException;
+import java.util.Properties;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 /** A sample application that publishes a message for every one that it receives.
  * Uses a synchronous receiver to block waiting for messages from the broker, and a 
@@ -147,7 +147,7 @@ public class GuaranteedProcessor {
             if (inboundTopic.contains("/pers/pub/")) {  // simple validation of topic
                 // how to "process" the incoming message? maybe do a DB lookup? add some additional properties? or change the payload?
                 OutboundMessageBuilder messageBuilder = messagingService.messageBuilder();
-                messageBuilder.withApplicationMessageId(inboundMsg.getApplicationMessageId());  // set the new message ID to the same as this one
+                messageBuilder.withProperty(SolaceProperties.MessageProperties.APPLICATION_MESSAGE_ID, inboundMsg.getProperty(SolaceProperties.MessageProperties.APPLICATION_MESSAGE_ID));// set the new message ID to the same as this one
                 final String upperCaseTopic = inboundTopic.toUpperCase();  // as a silly example of "processing"
                 OutboundMessage outboundMsg = messageBuilder.build(upperCaseTopic);
                 String [] inboundTopicLevels = inboundTopic.split("/",6);
