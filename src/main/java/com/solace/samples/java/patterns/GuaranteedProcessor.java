@@ -32,6 +32,7 @@ import com.solace.messaging.receiver.InboundMessage;
 import com.solace.messaging.receiver.PersistentMessageReceiver;
 import com.solace.messaging.resources.Queue;
 import com.solace.messaging.resources.Topic;
+import com.solacesystems.common.util.StringUtil;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -147,17 +148,20 @@ public class GuaranteedProcessor {
             if (inboundTopic.contains("/pers/pub/")) {  // simple validation of topic
                 // how to "process" the incoming message? maybe do a DB lookup? add some additional properties? or change the payload?
                 OutboundMessageBuilder messageBuilder = messagingService.messageBuilder();
-                messageBuilder.withProperty(SolaceProperties.MessageProperties.APPLICATION_MESSAGE_ID, inboundMsg.getProperty(SolaceProperties.MessageProperties.APPLICATION_MESSAGE_ID));// set the new message ID to the same as this one
+                if (!StringUtil.isEmpty(inboundMsg.getApplicationMessageId())) {
+                    messageBuilder.withProperty(SolaceProperties.MessageProperties.APPLICATION_MESSAGE_ID, inboundMsg.getApplicationMessageId());// set the new message ID to the same as this one
+                }
                 final String upperCaseTopic = inboundTopic.toUpperCase();  // as a silly example of "processing"
                 OutboundMessage outboundMsg = messageBuilder.build(upperCaseTopic);
-                String [] inboundTopicLevels = inboundTopic.split("/",6);
+                String[] inboundTopicLevels = inboundTopic.split("/", 6);
                 String onwardsTopic = new StringBuilder(TOPIC_PREFIX).append(API.toLowerCase())
-                		.append("/pers/upper/").append(inboundTopicLevels[5]).toString();
+                        .append("/pers/upper/").append(inboundTopicLevels[5]).toString();
                 try {
-                	ProcessorCorrelationKey ck = new ProcessorCorrelationKey(inboundMsg, outboundMsg, receiver);
-                	publisher.publish(outboundMsg, Topic.of(onwardsTopic), ck);
+                    ProcessorCorrelationKey ck = new ProcessorCorrelationKey(inboundMsg, outboundMsg, receiver);
+                    publisher.publish(outboundMsg, Topic.of(onwardsTopic), ck);
                     msgSentCounter++;
-                } catch (RuntimeException e) {  // threw from publish(), only thing that is throwing here, but keep trying (unless shutdown?)
+                } catch (
+                        RuntimeException e) {  // threw from publish(), only thing that is throwing here, but keep trying (unless shutdown?)
                     logger.warn("### Caught while trying to publisher.publish()",e);
                     isShutdown = true;  // just example, maybe look to see if recoverable
                 }
