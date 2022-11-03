@@ -13,8 +13,8 @@ run.enabled = false
 // Also don't need the regular application distribution packages since
 // this is just a set of samples. So disabling to make the build output
 // cleaner
-distTar.enabled=false
-distZip.enabled=false
+distTar.enabled = false
+distZip.enabled = false
 
 
 jar {
@@ -22,7 +22,7 @@ jar {
     archiveVersion = ''
     manifest {
         attributes 'Implementation-Title': 'Solace Java Getting Started Samples',
-                   'Implementation-Version': ''
+                'Implementation-Version': ''
     }
 }
 
@@ -65,8 +65,8 @@ sourceSets {
         java {
             srcDir 'src/main/java'
             srcDir 'src/dist/config'
-       }
-   }
+        }
+    }
 }
 
 tasks.withType(JavaCompile).all {
@@ -83,20 +83,22 @@ def scripts = [
         'GuaranteedSubscriber'          : 'com.solace.samples.java.patterns.GuaranteedSubscriber',
         'GuaranteedProcessor'           : 'com.solace.samples.java.patterns.GuaranteedProcessor',
         'DirectReplierBlocking'         : 'com.solace.samples.java.patterns.DirectReplierBlocking',
-        'DirectRequestorBlocking': 'com.solace.samples.java.patterns.DirectRequestorBlocking'
+        'DirectRequestorBlocking'       : 'com.solace.samples.java.patterns.DirectRequestorBlocking',
+        'DirectReplierNonBlocking'      : 'com.solace.samples.java.patterns.DirectReplierNonBlocking',
+        'DirectRequestorNonBlocking'    : 'com.solace.samples.java.patterns.DirectRequestorNonBlocking'
 ]
 scripts.each() { scriptName, className ->
-    def t = tasks.create(name: scriptName+'StartScript', type: CreateStartScripts) {
+    def t = tasks.create(name: scriptName + 'StartScript', type: CreateStartScripts) {
         mainClass = className
         applicationName = scriptName
         outputDir = new File(project.buildDir, 'scripts')
         classpath = jar.outputs.files + project.configurations.runtimeClasspath
         classpath += files('src/dist/config')  // this is where our log4j2.xml file will be
         doLast {  // necessary since Gradle assumes all classpath are under 'lib', need to modify
-          def windowsScriptFile = file getWindowsScript()
-          def unixScriptFile = file getUnixScript()
-          windowsScriptFile.text = windowsScriptFile.text.replace('%APP_HOME%\\lib\\config', '%APP_HOME%\\config')
-          unixScriptFile.text = unixScriptFile.text.replace('$APP_HOME/lib/config', '$APP_HOME/config')
+            def windowsScriptFile = file getWindowsScript()
+            def unixScriptFile = file getUnixScript()
+            windowsScriptFile.text = windowsScriptFile.text.replace('%APP_HOME%\\lib\\config', '%APP_HOME%\\config')
+            unixScriptFile.text = unixScriptFile.text.replace('$APP_HOME/lib/config', '$APP_HOME/config')
         }
         defaultJvmOpts = ['-ea']
     }
