@@ -17,12 +17,8 @@
 package com.solace.samples.java.patterns;
 
 
-import java.io.IOException;
-import java.util.Properties;
-
 import com.solace.messaging.MessagingService;
 import com.solace.messaging.config.SolaceProperties.AuthenticationProperties;
-import com.solace.messaging.config.SolaceProperties.MessageProperties;
 import com.solace.messaging.config.SolaceProperties.ServiceProperties;
 import com.solace.messaging.config.SolaceProperties.TransportLayerProperties;
 import com.solace.messaging.config.profile.ConfigurationProfile;
@@ -33,6 +29,9 @@ import com.solace.messaging.receiver.DirectMessageReceiver;
 import com.solace.messaging.receiver.MessageReceiver.MessageHandler;
 import com.solace.messaging.resources.Topic;
 import com.solace.messaging.resources.TopicSubscription;
+
+import java.io.IOException;
+import java.util.Properties;
 
 /**
  * A Processor is a microservice or application that receives a message, does something with the info,
@@ -108,9 +107,6 @@ public class DirectProcessor {
                 // how to "process" the incoming message? maybe do a DB lookup? add some additional properties? or change the payload?
                 final String upperCaseMessage = inboundTopic.toUpperCase();  // as a silly example of "processing"
                 
-                if (inboundMsg.getApplicationMessageId() != null) {  // populate for traceability
-                    messageBuilder.withProperty(MessageProperties.APPLICATION_MESSAGE_ID, inboundMsg.getApplicationMessageId());
-                }
                 OutboundMessage outboundMsg = messageBuilder.build(upperCaseMessage);  // build TextMessage to send
                 String [] inboundTopicLevels = inboundTopic.split("/",6);
                 String outboundTopic = new StringBuilder(TOPIC_PREFIX).append(API.toLowerCase())
