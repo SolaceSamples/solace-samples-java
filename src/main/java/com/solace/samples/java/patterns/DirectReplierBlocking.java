@@ -23,7 +23,6 @@ public class DirectReplierBlocking {
     private static final String SAMPLE_NAME = DirectReplierBlocking.class.getSimpleName();
     private static final String TOPIC_PREFIX = "solace/samples/";  // used as the topic "root"
     private static final String API = "Java";
-    private static volatile boolean hasDetectedDiscard = false;  // detected any discards yet?
     private static volatile boolean isShutdown = false;          // are we done yet?
 
     public static void main(String... args) throws IOException {
@@ -80,10 +79,6 @@ public class DirectReplierBlocking {
         System.out.println(API + " " + SAMPLE_NAME + " connected, and running.");
         while (System.in.available() == 0 && !isShutdown) {
             requestReplyMessageReceiver.receiveMessage(messageHandler, 1000);
-            if (hasDetectedDiscard) {
-                System.out.println("*** Egress discard detected *** : " + SAMPLE_NAME + " unable to keep up with full message rate");
-                hasDetectedDiscard = false;  // only show the error once per second
-            }
         }
         isShutdown = true;
         requestReplyMessageReceiver.terminate(500);

@@ -25,7 +25,6 @@ public class DirectReplierNonBlocking {
     private static final String SAMPLE_NAME = DirectReplierNonBlocking.class.getSimpleName();
     private static final String TOPIC_PREFIX = "solace/samples/";  // used as the topic "root"
     private static final String API = "Java";
-    private static volatile boolean hasDetectedDiscard = false;  // detected any discards yet?
     private static volatile boolean isShutdown = false;          // are we done yet?
 
     public static void main(String... args) throws IOException {
@@ -86,12 +85,6 @@ public class DirectReplierNonBlocking {
         //Request to register an asynchronous request message handler using supplied thread executor for callbacks. This method represents push-based non-blocking interface.
         requestReplyMessageReceiver.receiveAsync(messageHandler, executorService);
 
-        while (System.in.available() == 0 && !isShutdown) {
-            if (hasDetectedDiscard) {
-                System.out.println("*** Egress discard detected *** : " + SAMPLE_NAME + " unable to keep up with full message rate");
-                hasDetectedDiscard = false;  // only show the error once per second
-            }
-        }
         isShutdown = true;
         requestReplyMessageReceiver.terminate(500);
         messagingService.disconnect();
@@ -105,7 +98,7 @@ public class DirectReplierNonBlocking {
         if (args.length > 3) {
             properties.setProperty(SolaceProperties.AuthenticationProperties.SCHEME_BASIC_PASSWORD, args[3]);  // client-password
         }
-        properties.setProperty(SolaceProperties.ServiceProperties.RECEIVER_DIRECT_SUBSCRIPTION_REAPPLY, "true");  // subscribe Direct subs after reconnect
+//        properties.setProperty(SolaceProperties.ServiceProperties.RECEIVER_DIRECT_SUBSCRIPTION_REAPPLY, "true");  // subscribe Direct subs after reconnect
         properties.setProperty(SolaceProperties.TransportLayerProperties.RECONNECTION_ATTEMPTS, "20");  // recommended settings
         properties.setProperty(SolaceProperties.TransportLayerProperties.CONNECTION_RETRIES_PER_HOST, "5");
         // https://docs.solace.com/Solace-PubSub-Messaging-APIs/API-Developer-Guide/Configuring-Connection-T.htm
