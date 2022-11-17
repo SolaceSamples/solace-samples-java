@@ -85,6 +85,9 @@ public class DirectReplierNonBlocking {
         //Request to register an asynchronous request message handler using supplied thread executor for callbacks. This method represents push-based non-blocking interface.
         requestReplyMessageReceiver.receiveAsync(messageHandler, executorService);
 
+        while (System.in.available() == 0 && !isShutdown) {
+            //loop to keep the receiver running.
+        }
         isShutdown = true;
         requestReplyMessageReceiver.terminate(500);
         messagingService.disconnect();
