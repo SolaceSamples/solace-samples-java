@@ -110,6 +110,10 @@ public class DirectRequestorNonBlocking {
                 }
             }
         }
+        isShutdown = true;
+        requestReplyMessagePublisher.terminate(10000);
+        messagingService.disconnect();
+        System.out.println("Main thread quitting.");
     }
 
     private static Properties setupPropertiesForConnection(final String... args) {

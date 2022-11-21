@@ -99,6 +99,10 @@ public class DirectRequestorBlocking {
                 }
             }
         }
+        isShutdown = true;
+        requestReplyMessagePublisher.terminate(500);
+        messagingService.disconnect();
+        System.out.println("Main thread quitting.");
     }
 
     private static Properties setupPropertiesForConnection(final String... args) {
