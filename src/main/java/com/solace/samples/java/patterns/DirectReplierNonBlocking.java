@@ -92,6 +92,7 @@ public class DirectReplierNonBlocking {
         requestReplyMessageReceiver.terminate(500);
         messagingService.disconnect();
         System.out.println("Main thread quitting.");
+        System.exit(0);
     }
 
     private static void setupPropertiesForConnection(final Properties properties, final String... args) {
