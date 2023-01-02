@@ -25,6 +25,7 @@ public class DirectRequestorNonBlocking {
     private static final String TOPIC_PREFIX = "solace/samples/";  // used as the topic "root"
     private static final String API = "Java";
     private static final long REQUEST_TIMEOUT_MS = 3000;
+    private static final long TERMINATION_GRACE_PERIOD_MS = 500;
     private static volatile int loopCounter = 0;
     private static volatile boolean isShutdown = false;
 
@@ -111,7 +112,7 @@ public class DirectRequestorNonBlocking {
             }
         }
         isShutdown = true;
-        requestReplyMessagePublisher.terminate(10000);
+        requestReplyMessagePublisher.terminate(REQUEST_TIMEOUT_MS + TERMINATION_GRACE_PERIOD_MS);
         messagingService.disconnect();
         System.out.println("Main thread quitting.");
     }

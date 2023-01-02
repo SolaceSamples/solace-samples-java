@@ -87,12 +87,17 @@ public class DirectReplierNonBlocking {
 
         while (System.in.available() == 0 && !isShutdown) {
             //loop to keep the receiver running.
+            try {
+                Thread.sleep(1000);  // wait 1 second
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
         }
         isShutdown = true;
         requestReplyMessageReceiver.terminate(500);
         messagingService.disconnect();
+        executorService.shutdown();
         System.out.println("Main thread quitting.");
-        System.exit(0);
     }
 
     private static void setupPropertiesForConnection(final Properties properties, final String... args) {
