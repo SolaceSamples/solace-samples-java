@@ -7,7 +7,6 @@ import com.solace.messaging.config.profile.ConfigurationProfile;
 import com.solace.messaging.publisher.OutboundMessage;
 import com.solace.messaging.publisher.OutboundMessageBuilder;
 import com.solace.messaging.publisher.RequestReplyMessagePublisher;
-import com.solace.messaging.receiver.InboundMessage;
 import com.solace.messaging.resources.Topic;
 
 import java.io.IOException;
@@ -15,17 +14,18 @@ import java.util.Properties;
 
 /**
  * This class demonstrates the usage of the Solace Java API to create a Requester class.
- * This implementation focuses on the blocking behaviour of the API.
+ * This implementation focuses on the non-blocking behaviour of the API.
  * The mechanism of the Request-Reply pattern is defined in more detail over here : <a href="https://tutorials.solace.dev/jcsmp/request-reply/">Solace Request/Reply pattern</a>
  * <p>
- * Refer to the DirectReplierBlocking class for the reply component of the flow.
+ * Refer to the DirectReplierNonBlocking class for the reply component of the flow.
  */
-public class DirectRequestorBlocking {
+public class DirectRequestorNonBlocking {
 
-    private static final String SAMPLE_NAME = DirectRequestorBlocking.class.getSimpleName();
+    private static final String SAMPLE_NAME = DirectRequestorNonBlocking.class.getSimpleName();
     private static final String TOPIC_PREFIX = "solace/samples/";  // used as the topic "root"
     private static final String API = "Java";
     private static final long REQUEST_TIMEOUT_MS = 3000;
+    private static final long TERMINATION_GRACE_PERIOD_MS = 500;
     private static volatile int loopCounter = 0;
     private static volatile boolean isShutdown = false;
 
@@ -74,21 +74,33 @@ public class DirectRequestorBlocking {
 
                 System.out.println("The outbound message being published is : " + outboundMessage.getPayloadAsString());
 
-                //11. Publishes the message in a blocking manner.
-                // The API expects back a reply message from the Replier defined in the DirectReplierBlocking.java which is passed back in the InboundMessage object.
-                final InboundMessage inboundMessage = requestReplyMessagePublisher.publishAwaitResponse(outboundMessage, Topic.of(topicString), REQUEST_TIMEOUT_MS);
-//                System.out.println("The reply inboundMessage being logged is : " + inboundMessage.dump());   // Enable this for learning purposes as it logs a String representation of the whole Message
-                System.out.println("The reply inboundMessage payload being logged is : " + inboundMessage.getPayloadAsString());
+                //10. Publishes the message in a non-blocking manner.
+                requestReplyMessagePublisher.publish(outboundMessage,
+                        //Define an implementation for the RequestReplyMessagePublisher.ReplyMessageHandler, this should also include basic error and exception handling
+                        (inboundMessage, userContext, pubSubPlusClientException) -> {
+                            if (pubSubPlusClientException == null) { //Good, an ACK was received
+                                // System.out.println("The reply inboundMessage being logged is : " + inboundMessage.dump());   // Enable this for learning purposes as it logs a String representation of the whole Message
+                                System.out.println("The reply inboundMessage payload being logged is : " + inboundMessage.getPayloadAsString());
+                            } else { // not good, a NACK
+                                if (userContext != null) {
+                                    System.out.println(String.format("NACK for Message %s - %s", userContext, pubSubPlusClientException));
+                                }
+                                if (pubSubPlusClientException instanceof PubSubPlusClientException.TimeoutException) {
+                                    // This handles the situation that the requester application did not receive a reply for the published message within the specified timeout.
+                                    // This would be a good location for implementing resiliency or retry mechanisms.
+                                    System.out.printf("Publishing action timed out without any reply. Error : : %s%n", pubSubPlusClientException);
+                                    System.out.println("Publish timed-out for message with payload :" + outboundMessage.getPayloadAsString());
 
+                                } else {
+                                    throw new RuntimeException(pubSubPlusClientException);
+                                }
+                            }
+                        }
+                        , Topic.of(topicString), REQUEST_TIMEOUT_MS);
                 loopCounter++;     // increment by one
 
-            } catch (final PubSubPlusClientException.TimeoutException timeoutException) {
-                // This handles the situation that the requester application did not receive a reply for the published message within the specified timeout.
-                // This would be a good location for implementing resiliency or retry mechanisms.
-                System.out.printf("Publishing action timed out without any reply. Error : : %s%n", timeoutException);
-                loopCounter++;
-            } catch (final RuntimeException | InterruptedException runtimeException) {
-                System.out.printf("### Caught while trying to publisher.publishAwaitResponse(): %s%n", runtimeException);
+            } catch (final RuntimeException runtimeException) {
+                System.out.printf("### Caught while trying to publisher.publish(): %s%n", runtimeException);
                 isShutdown = true;  // or try to handle the specific exception more gracefully
             } finally {
                 try {
@@ -100,7 +112,7 @@ public class DirectRequestorBlocking {
             }
         }
         isShutdown = true;
-        requestReplyMessagePublisher.terminate(500);
+        requestReplyMessagePublisher.terminate(REQUEST_TIMEOUT_MS + TERMINATION_GRACE_PERIOD_MS);
         messagingService.disconnect();
         System.out.println("Main thread quitting.");
     }
@@ -131,7 +143,7 @@ public class DirectRequestorBlocking {
     }
 
     private static OutboundMessage createOutboundMessageForPublishing(final OutboundMessageBuilder messageBuilder, final String payloadString) {
-        // Its possible to add in application properties on the message as required.
+        // It's possible to add in application properties on the message as required.
         return messageBuilder.build(payloadString);  // binary payload message
     }
 }

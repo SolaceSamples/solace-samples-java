@@ -10,17 +10,19 @@ import com.solace.messaging.resources.TopicSubscription;
 
 import java.io.IOException;
 import java.util.Properties;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 
 /**
  * This class demonstrates the usage of the Solace Java API to create a Replier class.
- * This implementation focuses on the blocking behaviour of the API.
+ * This implementation focuses on the non-blocking behaviour of the API.
  * The mechanism of the Request-Reply pattern is defined in more detail over here : <a href="https://tutorials.solace.dev/jcsmp/request-reply/">Solace Request/Reply pattern</a>
  * <p>
- * Refer to the DirectRequestorBlocking class for the request component of the flow.
+ * Refer to the DirectRequestorNonBlocking class for the request component of the flow.
  */
-public class DirectReplierBlocking {
+public class DirectReplierNonBlocking {
 
-    private static final String SAMPLE_NAME = DirectReplierBlocking.class.getSimpleName();
+    private static final String SAMPLE_NAME = DirectReplierNonBlocking.class.getSimpleName();
     private static final String TOPIC_PREFIX = "solace/samples/";  // used as the topic "root"
     private static final String API = "Java";
     private static volatile boolean isShutdown = false;          // are we done yet?
@@ -39,7 +41,7 @@ public class DirectReplierBlocking {
         setupPropertiesForConnection(properties, args);
 
         //3. Create the MessagingService object and establishes the connection with the Solace event broker
-        final MessagingService messagingService = com.solace.messaging.MessagingService.builder(ConfigurationProfile.V1).fromProperties(properties).build();
+        final MessagingService messagingService = MessagingService.builder(ConfigurationProfile.V1).fromProperties(properties).build();
         messagingService.connect();  // blocking connect to the broker
 
         //4. Register event handlers and callbacks for connection error handling.
@@ -77,14 +79,25 @@ public class DirectReplierBlocking {
 
         //8. Loop to identify message discards or errors and terminate if required. This should be handled in a more resilient manner
         System.out.println(API + " " + SAMPLE_NAME + " connected, and running.");
+        //8-A. Create a scheduler variable with the required configurations to process the message in
+        final ScheduledExecutorService executorService = Executors.newScheduledThreadPool(2);
+
+        //Request to register an asynchronous request message handler using supplied thread executor for callbacks. This method represents push-based non-blocking interface.
+        requestReplyMessageReceiver.receiveAsync(messageHandler, executorService);
+
         while (System.in.available() == 0 && !isShutdown) {
-            requestReplyMessageReceiver.receiveMessage(messageHandler, 1000);
+            //loop to keep the receiver running.
+            try {
+                Thread.sleep(1000);  // wait 1 second
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
         }
         isShutdown = true;
         requestReplyMessageReceiver.terminate(500);
         messagingService.disconnect();
+        executorService.shutdown();
         System.out.println("Main thread quitting.");
-        System.exit(0);
     }
 
     private static void setupPropertiesForConnection(final Properties properties, final String... args) {
@@ -94,7 +107,6 @@ public class DirectReplierBlocking {
         if (args.length > 3) {
             properties.setProperty(SolaceProperties.AuthenticationProperties.SCHEME_BASIC_PASSWORD, args[3]);  // client-password
         }
-        properties.setProperty(SolaceProperties.ServiceProperties.RECEIVER_DIRECT_SUBSCRIPTION_REAPPLY, "true");  // subscribe Direct subs after reconnect
         properties.setProperty(SolaceProperties.TransportLayerProperties.RECONNECTION_ATTEMPTS, "20");  // recommended settings
         properties.setProperty(SolaceProperties.TransportLayerProperties.CONNECTION_RETRIES_PER_HOST, "5");
         // https://docs.solace.com/Solace-PubSub-Messaging-APIs/API-Developer-Guide/Configuring-Connection-T.htm
