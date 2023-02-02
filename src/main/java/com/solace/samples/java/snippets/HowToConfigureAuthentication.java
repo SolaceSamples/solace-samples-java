@@ -18,9 +18,12 @@ package com.solace.samples.java.snippets;
 
 
 import com.solace.messaging.MessagingService;
+import com.solace.messaging.PubSubPlusClientException;
 import com.solace.messaging.config.AuthenticationStrategy.BasicUserNamePassword;
 import com.solace.messaging.config.AuthenticationStrategy.ClientCertificateAuthentication;
 import com.solace.messaging.config.AuthenticationStrategy.Kerberos;
+import com.solace.messaging.config.AuthenticationStrategy.OAuth2;
+import com.solace.messaging.config.SolaceProperties.AuthenticationProperties;
 import com.solace.messaging.config.TransportSecurityStrategy.TLS;
 import com.solace.messaging.config.profile.ConfigurationProfile;
 import com.solace.messaging.util.SecureStoreFormat;
@@ -165,5 +168,61 @@ public class HowToConfigureAuthentication {
         .build().connect();
   }
 
+
+  /**
+   * Example how to configure service access to use OAuth 2 authentication with an access token and
+   * an optional issuer identifier
+   *
+   * @param accessToken      access token
+   * @param issuerIdentifier Issuer identifier URI
+   * @return configured and connected instance of {@code MessagingService} ready to be used for
+   * messaging tasks
+   */
+  public static MessagingService configureOauth2WithAccessTokenAuthentication(String accessToken,
+      String issuerIdentifier) {
+    return MessagingService.builder(ConfigurationProfile.V1).local()
+        .withAuthenticationStrategy(OAuth2.of(accessToken).withIssuerIdentifier(issuerIdentifier))
+        .build().connect();
+  }
+
+  /**
+   * Example how to configure service access to use OIDC authentication with an ID token and
+   * optional access token
+   *
+   * @param idToken     ID token
+   * @param accessToken access token
+   * @return configured and connected instance of {@code MessagingService} ready to be used for
+   * messaging tasks
+   */
+  public static MessagingService configureOIDCAwithIdTokenuthentication(String idToken,
+      String accessToken) {
+    return MessagingService.builder(ConfigurationProfile.V1).local()
+        .withAuthenticationStrategy(OAuth2.of(accessToken, idToken))
+        .build().connect();
+  }
+
+  /**
+   * Example how to update an expiring OAUTH2 (access or/and ID) tokens.
+   * <p>User is in charge to obtain a new valid token in order to use this API
+   * <p>Update won't take in effect instantly but upper next reconnection
+   *
+   * @param service        connected or disconnected service with at least one outstanding
+   *                       reconnection attempt
+   * @param newAccessToken new access token
+   * @param newOidcIdToken new ID token
+   * @throws IllegalArgumentException  when new token is null
+   * @throws PubSubPlusClientException If other transport or communication related errors occur
+   */
+  public void updateOauth2Token(MessagingService service, String newAccessToken,
+      String newOidcIdToken)
+      throws IllegalArgumentException, PubSubPlusClientException {
+// The new access token is going to be used for authentication to the broker after broker disconnects a client (i.e due to old token expiration).
+// this token update happens during the next service reconnection attempt.
+// There will be no way to signal to the user if new token is valid. When the new token is not valid,
+// then reconnection will be retried for the remaining number of times or forever if configured so.
+// Usage of ServiceInterruptionListener and accompanied exceptions if any can be used to determine if token update during next reconnection was successful.
+    service.updateProperty(AuthenticationProperties.SCHEME_OAUTH2_ACCESS_TOKEN, newAccessToken);
+    service.updateProperty(AuthenticationProperties.SCHEME_OAUTH2_OIDC_ID_TOKEN, newOidcIdToken);
+  }
 
 }
