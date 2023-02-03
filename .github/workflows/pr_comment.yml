@@ -15,7 +15,7 @@ jobs:
           message: |  
             Hi there! 👋
 
-            Thanks for your PR. Please check if your code changes in this PR are references on https://tutorials.solace.dev/
+            Thanks for your PR. Please check if your the changes in this PR are referenced on https://tutorials.solace.dev/
 
             If they are, please update:
 
