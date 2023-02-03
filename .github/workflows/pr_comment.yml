@@ -1,6 +1,10 @@
 on:
   pull_request:
 
+env:
+  GITHUB_TOKEN: ${{ secrets.SOLACE_BOT }}
+
+
 jobs:
   pr-comment:
     name: Alert to check tutorials 
