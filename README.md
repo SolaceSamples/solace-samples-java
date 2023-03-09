@@ -17,13 +17,14 @@ To check out the project and build it, do the following:
   2. `cd solace-samples-java`
   
 ### Build the Samples
-
 ```
 ./gradlew clean assemble
-cd build/staged
-./bin/HelloWorld
 ```
-
+### Running the Samples
+```
+cd build/staged/bin
+./HelloWorld
+```
 ### Import into Eclipse
 
 ```
