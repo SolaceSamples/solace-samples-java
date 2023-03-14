@@ -53,6 +53,7 @@ public class GuaranteedSubscriber {
     public static void main(String... args) throws InterruptedException, IOException {
         if (args.length < 3) {  // Check command line arguments
             System.out.printf("Usage: %s <host:port> <message-vpn> <client-username> [password]%n%n", SAMPLE_NAME);
+            System.out.printf("This application assumes a queue named q_java_sub has already been created as the target. See the patterns file for more info.");
             System.exit(-1);
         }
         System.out.println(API + " " + SAMPLE_NAME + " initializing...");
