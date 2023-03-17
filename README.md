@@ -1,22 +1,30 @@
-# Solace Samples Java
+# Getting Started Examples
+## Solace Java API
 
-## Overview
-This repository holds code samples for the "Solace PubSub+ Messaging API for Java". Note: The solace Java JCSMP Samples could be found here [https://github.com/SolaceSamples/solace-samples-java-jcsmp](https://github.com/SolaceSamples/solace-samples-java-jcsmp)
+This repository holds code samples for the "Solace PubSub+ Messaging API for Java". 
+- Note: The solace Java JCSMP Samples could be found here [https://github.com/SolaceSamples/solace-samples-java-jcsmp](https://github.com/SolaceSamples/solace-samples-java-jcsmp)
 
 ## Structure of Samples
 There are two types of samples available: 
 1. `samples/src/main/java/com/solace/patterns` runnable simple applications demonstrating how to implement key message exchange patterns using the API. 
 1. `samples/src/main/java/com/solace/snippets` coding examples demonstrating how to use specific features of the API.  
 
+## Checking out and Building
 
-## Building
+To check out the project and build it, do the following:
 
+  1. `git clone` this GitHub repository
+  2. `cd solace-samples-java`
+  
+### Build the Samples
 ```
 ./gradlew clean assemble
-cd build/staged
-./bin/HelloWorld
 ```
-
+### Running the Samples
+```
+cd build/staged/bin
+./HelloWorld
+```
 ### Import into Eclipse
 
 ```
@@ -44,5 +52,3 @@ For more information try these resources:
 - [API Tutorials](https://tutorials.solace.dev/)
 - The Solace Developer Hub at: https://solace.dev
 - Ask the [Solace Community.](http://dev.solace.com/community/)
-
-
