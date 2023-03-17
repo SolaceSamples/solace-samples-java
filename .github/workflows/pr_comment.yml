@@ -1,16 +1,14 @@
 on:
   pull_request:
 
-env:
-  GITHUB_TOKEN: ${{ secrets.SOLACE_BOT }}
-
-
 jobs:
   pr-comment:
     name: Alert to check tutorials 
     runs-on: ubuntu-latest
     steps:
       - uses: mshick/add-pr-comment@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.SOLACE_BOT }}
         with:
           message: |  
             Hi there! 👋
