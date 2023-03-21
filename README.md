@@ -16,11 +16,11 @@ To check out the project and build it, do the following:
   1. `git clone` this GitHub repository
   2. `cd solace-samples-java`
   
-### Build the Samples
+## Build the Samples
 ```
 ./gradlew clean assemble
 ```
-### Running the Samples
+## Running the Samples
 ```
 cd build/staged/bin
 ./HelloWorld
