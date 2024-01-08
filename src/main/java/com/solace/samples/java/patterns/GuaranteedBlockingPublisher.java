@@ -121,7 +121,7 @@ public class GuaranteedBlockingPublisher {
                         .append("/pers/pub/").append(chosenCharacter).toString();
                 try {
                     // send the message
-                    publisher.publishAwaitAcknowledgement(message,Topic.of(topicString),2000L);  // wait up to 2 seconds?
+                    publisher.publishAwaitAcknowledgement(message,Topic.of(topicString), 2000L);  // wait up to 2 seconds for ACK
                     msgSentCounter++;  // add one
                 } catch (PubSubPlusClientException e) {  // could be different types
                     logger.warn(String.format("NACK for Message %s - %s", message, e));
