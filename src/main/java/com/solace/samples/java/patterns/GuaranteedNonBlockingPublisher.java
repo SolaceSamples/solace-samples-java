@@ -134,7 +134,7 @@ public class GuaranteedNonBlockingPublisher {
                 OutboundMessage message = messageBuilder.build(payload);  // binary payload message
                 // dynamic topics!!
                 String topicString = new StringBuilder(TOPIC_PREFIX).append("java/pers/pub/").append(chosenCharacter).toString();
-                publisher.publish(message,Topic.of(topicString));  // send the message
+                publisher.publish(message,Topic.of(topicString));  // send the message asynchronously, ACK received later on callback
                 msgSentCounter++;  // add one
             } catch (RuntimeException e) {  // threw from publish(), only thing that is throwing here, but keep trying (unless shutdown?)
                 logger.warn("### Caught while trying to publisher.publish()",e);
