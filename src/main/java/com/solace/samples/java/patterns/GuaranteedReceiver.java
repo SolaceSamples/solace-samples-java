@@ -31,14 +31,14 @@ import com.solace.messaging.receiver.PersistentMessageReceiver;
 import com.solace.messaging.resources.Queue;
 
 /**
- * A sample application showing non-blocking subscriber for Guaranteed messages.
+ * A sample application showing non-blocking Receiver for Guaranteed messages.
  * This application assumes a queue named <code>q_java_sub</code> has already been
  * created for it, and the topic subscription <code>solace/samples/&ast;/pers/></code>
  * has been added to it. 
  */
-public class GuaranteedSubscriber {
+public class GuaranteedReceiver {
 
-    private static final String SAMPLE_NAME = GuaranteedSubscriber.class.getSimpleName();
+    private static final String SAMPLE_NAME = GuaranteedReceiver.class.getSimpleName();
     private static final String QUEUE_NAME = "q_java_sub";
     private static final String API = "Java";
     

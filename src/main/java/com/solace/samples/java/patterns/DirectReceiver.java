@@ -31,9 +31,9 @@ import com.solace.messaging.resources.TopicSubscription;
 /**
  * A more performant sample that shows an application that subscribes.
  */
-public class DirectSubscriber {
+public class DirectReceiver {
     
-    private static final String SAMPLE_NAME = DirectSubscriber.class.getSimpleName();
+    private static final String SAMPLE_NAME = DirectReceiver.class.getSimpleName();
     private static final String TOPIC_PREFIX = "solace/samples/";  // used as the topic "root"
     private static final String API = "Java";
     
