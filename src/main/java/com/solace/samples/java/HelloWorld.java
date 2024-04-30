@@ -76,7 +76,7 @@ public class HelloWorld {
         final DirectMessagePublisher publisher = messagingService.createDirectMessagePublisherBuilder()
                 .onBackPressureWait(1).build().start();
         
-        // create and start the subscriber
+        // create and start the receiver
         final DirectMessageReceiver receiver = messagingService.createDirectMessageReceiverBuilder()
                 .withSubscriptions(TopicSubscription.of(TOPIC_PREFIX + "*/hello/>")).build().start();
         final MessageHandler messageHandler = (inboundMessage) -> {

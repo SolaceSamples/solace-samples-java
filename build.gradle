@@ -76,11 +76,11 @@ tasks.withType(JavaCompile).all {
 def scripts = [
         'HelloWorld'                    : 'com.solace.samples.java.HelloWorld',
         'DirectPublisher'               : 'com.solace.samples.java.patterns.DirectPublisher',
-        'DirectSubscriber'              : 'com.solace.samples.java.patterns.DirectSubscriber',
+        'DirectReceiver'              : 'com.solace.samples.java.patterns.DirectReceiver',
         'DirectProcessor'               : 'com.solace.samples.java.patterns.DirectProcessor',
         'GuaranteedNonBlockingPublisher': 'com.solace.samples.java.patterns.GuaranteedNonBlockingPublisher',
         'GuaranteedBlockingPublisher'   : 'com.solace.samples.java.patterns.GuaranteedBlockingPublisher',
-        'GuaranteedSubscriber'          : 'com.solace.samples.java.patterns.GuaranteedSubscriber',
+        'GuaranteedReceiver'          : 'com.solace.samples.java.patterns.GuaranteedReceiver',
         'GuaranteedProcessor'           : 'com.solace.samples.java.patterns.GuaranteedProcessor',
         'DirectReplierBlocking'         : 'com.solace.samples.java.patterns.DirectReplierBlocking',
         'DirectRequestorBlocking'       : 'com.solace.samples.java.patterns.DirectRequestorBlocking',
