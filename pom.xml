@@ -10,7 +10,7 @@
     <dependency>
       <groupId>com.solace</groupId>
       <artifactId>solace-messaging-client</artifactId>
-      <version>1.4.0-SOL-64920.1159</version>
+      <version>1.7.0</version>
     </dependency>
     <dependency>
       <groupId>org.apache.logging.log4j</groupId>
@@ -41,7 +41,7 @@
       <dependency>
           <groupId>com.solace</groupId>
           <artifactId>pubsubplus-opentelemetry-java-integration</artifactId>
-          <version>1.0.0-20240611.205113-6</version>
+          <version>1.0.0</version>
       </dependency>
   </dependencies>
 
