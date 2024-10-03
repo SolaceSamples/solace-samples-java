@@ -69,10 +69,11 @@ public class HowToImplementTracingManualInstrumentation {
      */
     void howToExtractTraceContextIfAnyFromSolaceMessage(InboundMessage receivedMessage,
                                                         OpenTelemetry openTelemetry) {
-        // Extracts tracing context from a message, if any using the SolacePubSubPlusJavaTextMapGetter
-        final SolacePubSubPlusJavaTextMapGetter getter = new SolacePubSubPlusJavaTextMapGetter();
+        // Extracts tracing context from a message
+        // The SolacePubSubPlusJavaTextMapGetter is used our custom TextMapGetter which extracts
+        // tracing information from the message such as: traceparent, tracestate or baggage
         final Context extractedContext = openTelemetry.getPropagators().getTextMapPropagator()
-                .extract(Context.current(), receivedMessage, getter);
+                .extract(Context.current(), receivedMessage, new SolacePubSubPlusJavaTextMapGetter());
 
         // Then set the extractedContext as current context
         try (Scope scope = extractedContext.makeCurrent()) {
@@ -122,7 +123,7 @@ public class HowToImplementTracingManualInstrumentation {
                 // optionally, could also add trace, span, baggage information as User Properties for interop with other protocols (MQTT, AMQP)
                 propagator.inject(Context.current(), message, setter);
                 // publish message to the given topic
-                messagePublisher.publish("simple message to the world", messageDestination);
+                messagePublisher.publish(message, messageDestination);
             }
         } catch (Exception e) {
             sendSpan.recordException(e); // Span can record exception if any
@@ -147,10 +148,11 @@ public class HowToImplementTracingManualInstrumentation {
                                             Consumer<InboundMessage> messageProcessor,
                                             OpenTelemetry openTelemetry, Tracer tracer) {
 
-        // Extract tracing context from message, if any using the SolacePubSubPlusJavaTextMapGetter
-        final SolacePubSubPlusJavaTextMapGetter getter = new SolacePubSubPlusJavaTextMapGetter();
+        // Extract tracing context from message
+        // The SolacePubSubPlusJavaTextMapGetter is our custom TextMapGetter which extracts
+        // tracing information from the message such as: traceparent, tracestate or baggage
         final Context extractedContext = openTelemetry.getPropagators().getTextMapPropagator()
-                .extract(Context.current(), receivedMessage, getter);
+                .extract(Context.current(), receivedMessage, new SolacePubSubPlusJavaTextMapGetter());
 
         // Set the extracted context as current context
         try (Scope scope = extractedContext.makeCurrent()) {
