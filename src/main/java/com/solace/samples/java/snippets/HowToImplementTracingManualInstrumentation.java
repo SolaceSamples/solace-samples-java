@@ -119,6 +119,7 @@ public class HowToImplementTracingManualInstrumentation {
                 final SolacePubSubPlusJavaTextMapSetter setter = new SolacePubSubPlusJavaTextMapSetter();
                 final TextMapPropagator propagator = openTelemetry.getPropagators().getTextMapPropagator();
                 // then inject current context with send span and baggage into the message
+                // optionally, could also add trace, span, baggage information as User Properties for interop with other protocols (MQTT, AMQP)
                 propagator.inject(Context.current(), message, setter);
                 // publish message to the given topic
                 messagePublisher.publish("simple message to the world", messageDestination);
