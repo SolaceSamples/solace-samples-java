@@ -10,23 +10,39 @@
     <dependency>
       <groupId>com.solace</groupId>
       <artifactId>solace-messaging-client</artifactId>
-      <version>1.4.0</version>
+      <version>[1.7.0,2)</version>
     </dependency>
     <dependency>
       <groupId>org.apache.logging.log4j</groupId>
       <artifactId>log4j-api</artifactId>
-      <version>2.17.2</version>
+      <version>[2.24.0,2.99)</version>
     </dependency>
     <dependency>
       <groupId>org.apache.logging.log4j</groupId>
       <artifactId>log4j-core</artifactId>
-      <version>2.17.2</version>
+      <version>[2.24.0,2.99)</version>
     </dependency>
     <dependency>
       <groupId>org.apache.logging.log4j</groupId>
       <artifactId>log4j-jcl</artifactId>
-      <version>2.17.2</version>
+      <version>[2.24.0,2.99)</version>
     </dependency>
+      <!-- Distributed Tracing Dependency on OpenTelemetry and Solace PubSub+ OpenTelemetry Java Integration -->
+      <dependency>
+          <groupId>io.opentelemetry</groupId>
+          <artifactId>opentelemetry-exporter-otlp</artifactId>
+          <version>[1.42.0,2.0.0)</version>
+      </dependency>
+      <dependency>
+          <groupId>io.opentelemetry.semconv</groupId>
+          <artifactId>opentelemetry-semconv</artifactId>
+          <version>[1.27.0-alpha,2.0.0)</version>
+      </dependency>
+      <dependency>
+          <groupId>com.solace</groupId>
+          <artifactId>pubsubplus-opentelemetry-java-integration</artifactId>
+          <version>[1.0.0,2.0.0)</version>
+      </dependency>
   </dependencies>
 
   <build>
