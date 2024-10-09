@@ -5,6 +5,8 @@ jobs:
   pr-comment:
     name: Alert to check tutorials 
     runs-on: ubuntu-latest
+    env:
+      GITHUB_TOKEN: ${{ secrets.SOLACE_BOT }}
     permissions:
       pull-requests: write
     steps:
