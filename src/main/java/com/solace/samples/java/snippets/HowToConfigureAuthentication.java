@@ -1,12 +1,12 @@
 /*
  * Copyright 2021-2023 Solace Corporation. All rights reserved.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -27,6 +27,8 @@ import com.solace.messaging.config.SolaceProperties.AuthenticationProperties;
 import com.solace.messaging.config.TransportSecurityStrategy.TLS;
 import com.solace.messaging.config.profile.ConfigurationProfile;
 import com.solace.messaging.util.SecureStoreFormat;
+
+import java.time.Instant;
 import java.util.Properties;
 
 /**
@@ -34,195 +36,248 @@ import java.util.Properties;
  */
 public class HowToConfigureAuthentication {
 
-  /**
-   * Example how to configure service access to use a basic authentication with user name and
-   * password
-   *
-   * @param userName user name
-   * @param password password
-   * @return configured and connected instance of {@code MessagingService} ready to be used for
-   * messaging tasks
-   */
-  public static MessagingService configureBasicAuthCredentials(String userName,
-      String password) {
-    return MessagingService.builder(ConfigurationProfile.V1).local()
-        // can configure or override credentials manually
-        .withAuthenticationStrategy(
-            BasicUserNamePassword.of(userName, password))
-        .build().connect();
-  }
+    /**
+     * Example how to configure service access to use a basic authentication with user name and
+     * password
+     *
+     * @param userName user name
+     * @param password password
+     * @return configured and connected instance of {@code MessagingService} ready to be used for
+     * messaging tasks
+     */
+    public static MessagingService configureBasicAuthCredentials(String userName,
+                                                                 String password) {
+        return MessagingService.builder(ConfigurationProfile.V1).local()
+                // can configure or override credentials manually
+                .withAuthenticationStrategy(
+                        BasicUserNamePassword.of(userName, password))
+                .build().connect();
+    }
 
-  /**
-  * Example how to configure service access using Kerberos with Jaas login context name
-   * <p>Prerequisite for this example to work on a client side is existence of jaas login
-   * configuration file 'jaas.conf' similar to one in 'src/main/resources/' and valid kerberos
-   * configuration file 'krb5.conf'
-   *
-   * @param serviceConfiguration service configuration properties
-   * @return configured and connected instance of {@code MessagingService} ready to be used for
-   * messaging tasks
-   * @see <a href="https://docs.solace.com/Configuring-and-Managing/Configuring-Client-Authentication.htm#Config-Kerberos">How
-   * to configure Kerberos</a>
-   */
-  public static MessagingService configureKerberosWithJaasLoginContextName(
-      Properties serviceConfiguration) {
+    /**
+     * Example how to configure service access using Kerberos with Jaas login context name
+     * <p>Prerequisite for this example to work on a client side is existence of jaas login
+     * configuration file 'jaas.conf' similar to one in 'src/main/resources/' and valid kerberos
+     * configuration file 'krb5.conf'
+     *
+     * @param serviceConfiguration service configuration properties
+     * @return configured and connected instance of {@code MessagingService} ready to be used for
+     * messaging tasks
+     * @see <a href="https://docs.solace.com/Configuring-and-Managing/Configuring-Client-Authentication.htm#Config-Kerberos">How
+     * to configure Kerberos</a>
+     */
+    public static MessagingService configureKerberosWithJaasLoginContextName(
+            Properties serviceConfiguration) {
 
-    final String jaasLoginContextName = "SolaceGSS";
+        final String jaasLoginContextName = "SolaceGSS";
 
-    return MessagingService.builder(ConfigurationProfile.V1).fromProperties(serviceConfiguration)
-        // can configure or override authentication manually
-        .withAuthenticationStrategy(
-            // jaasLoginContextName correlates to the entry in resources/jaas.conf file
-            // uses default value 'solace' for kerberos principal instance name,
-            // no mutual authentication is enabled
-            Kerberos.of(jaasLoginContextName))
-        .build().connect();
-  }
+        return MessagingService.builder(ConfigurationProfile.V1).fromProperties(serviceConfiguration)
+                // can configure or override authentication manually
+                .withAuthenticationStrategy(
+                        // jaasLoginContextName correlates to the entry in resources/jaas.conf file
+                        // uses default value 'solace' for kerberos principal instance name,
+                        // no mutual authentication is enabled
+                        Kerberos.of(jaasLoginContextName))
+                .build().connect();
+    }
 
-  /**
-   * Prerequisite for this example to work to work on a client is existence of jaas login
-   * configuration file 'jaas.conf' similar to one in 'src/main/resources/' and valid kerberos
-   * configuration file 'krb5.conf'
-   *
-   * @param serviceConfiguration service configuration properties
-   * @return configured and connected instance of {@code MessagingService} ready to be used for
-   * messaging tasks
-   * @see <a href="https://docs.solace.com/Configuring-and-Managing/Configuring-Client-Authentication.htm#Config-Kerberos">How
-   * to configure Kerberos</a>
-   */
-  public static MessagingService configureKerberosCustomizeAllSettings(
-      Properties serviceConfiguration) {
-    final String kerberosPrincipalInstanceName = "solace01";
-    final String jaasLoginContextName = "SolaceGSS";
-    final String myUserNameOnBroker = "myUserNameOnBroker";
+    /**
+     * Prerequisite for this example to work to work on a client is existence of jaas login
+     * configuration file 'jaas.conf' similar to one in 'src/main/resources/' and valid kerberos
+     * configuration file 'krb5.conf'
+     *
+     * @param serviceConfiguration service configuration properties
+     * @return configured and connected instance of {@code MessagingService} ready to be used for
+     * messaging tasks
+     * @see <a href="https://docs.solace.com/Configuring-and-Managing/Configuring-Client-Authentication.htm#Config-Kerberos">How
+     * to configure Kerberos</a>
+     */
+    public static MessagingService configureKerberosCustomizeAllSettings(
+            Properties serviceConfiguration) {
+        final String kerberosPrincipalInstanceName = "solace01";
+        final String jaasLoginContextName = "SolaceGSS";
+        final String myUserNameOnBroker = "myUserNameOnBroker";
 
-    return MessagingService.builder(ConfigurationProfile.V1).fromProperties(serviceConfiguration)
-        // can configure or override authentication manually
-        .withAuthenticationStrategy(
-            // jaasLoginContextName correlates to the entry in resources/jaas.conf file
-            // myUserNameOnBroker should be setup on a broker,
-            // enable mutual authentication and JAAS config file reloading
-            Kerberos
-                .of(kerberosPrincipalInstanceName, jaasLoginContextName)
-                .withUserName(myUserNameOnBroker).withMutualAuthentication()
-                .withReloadableJaasConfiguration())
-        .build().connect();
-  }
-
-
-  /**
-   * For a client to use a client certificate authentication scheme, the host event broker must be
-   * properly configured for TLS/SSL connections, and Client Certificate Verification must be
-   * enabled for the particular Message VPN that the client is connecting to. On client side client
-   * certificate needs to be present in a keystore file.
-   *
-   * @param myKeystorePassword password for the keystore
-   * @param myKeystoreUrl      url to the keystore file
-   * @return configured and connected instance of {@code MessagingService} ready to be used for
-   * messaging tasks
-   */
-  public static MessagingService configureClientCertificateAuthenticationCustomizeAllSettings(
-      String myKeystorePassword, String myKeystoreUrl) {
-
-    return MessagingService.builder(ConfigurationProfile.V1).localTLS(55443)
-        // transport security TLS is REQUIRED
-        .withTransportSecurityStrategy(TLS.create())
-        // can configure or override authentication manually
-        .withAuthenticationStrategy(
-            // jaasLoginContextName correlates to the entry in resources/jaas.conf file
-            // myUserNameOnBroker should be setup on a broker, or just use null
-            ClientCertificateAuthentication
-                .of(myKeystoreUrl, myKeystorePassword)
-        )
-        .build().connect();
-  }
-
-  /**
-   * For a client to use a client certificate authentication scheme, the host event broker must be
-   * properly configured for TLS/SSL connections, and Client Certificate Verification must be
-   * enabled for the particular Message VPN that the client is connecting to. On client side client
-   * certificate needs to be present in a keystore file.
-   *
-   * @param myKeystorePassword           password for the keystore
-   * @param myEspecialPrivateKeyPassword password for the private key stored in a keystore if a
-   *                                     different from a {@code myKeystorePassword} password is
-   *                                     used
-   * @param myKeystoreUrl                url to the keystore file
-   * @return configured and connected instance of {@code MessagingService} ready to be used for
-   * messaging tasks
-   */
-  public static MessagingService configureClientCertificateAuthenticationCustomizeAllSettings(
-      String myKeystorePassword, String myEspecialPrivateKeyPassword, String myKeystoreUrl) {
-
-    return MessagingService.builder(ConfigurationProfile.V1).localTLS(55443)
-        // transport security TLS is REQUIRED
-        .withTransportSecurityStrategy(TLS.create())
-        // can configure or override authentication manually
-        .withAuthenticationStrategy(
-            // jaasLoginContextName correlates to the entry in resources/jaas.conf file
-            // myUserNameOnBroker should be setup on a broker
-            ClientCertificateAuthentication
-                .of(myKeystoreUrl, myKeystorePassword, SecureStoreFormat.PKCS12)
-                .withPrivateKeyPassword(myEspecialPrivateKeyPassword)
-        )
-        .build().connect();
-  }
+        return MessagingService.builder(ConfigurationProfile.V1).fromProperties(serviceConfiguration)
+                // can configure or override authentication manually
+                .withAuthenticationStrategy(
+                        // jaasLoginContextName correlates to the entry in resources/jaas.conf file
+                        // myUserNameOnBroker should be setup on a broker,
+                        // enable mutual authentication and JAAS config file reloading
+                        Kerberos
+                                .of(kerberosPrincipalInstanceName, jaasLoginContextName)
+                                .withUserName(myUserNameOnBroker).withMutualAuthentication()
+                                .withReloadableJaasConfiguration())
+                .build().connect();
+    }
 
 
-  /**
-   * Example how to configure service access to use OAuth 2 authentication with an access token and
-   * an optional issuer identifier
-   *
-   * @param accessToken      access token
-   * @param issuerIdentifier Issuer identifier URI
-   * @return configured and connected instance of {@code MessagingService} ready to be used for
-   * messaging tasks
-   */
-  public static MessagingService configureOauth2WithAccessTokenAuthentication(String accessToken,
-      String issuerIdentifier) {
-    return MessagingService.builder(ConfigurationProfile.V1).local()
-        .withAuthenticationStrategy(OAuth2.of(accessToken).withIssuerIdentifier(issuerIdentifier))
-        .build().connect();
-  }
+    /**
+     * For a client to use a client certificate authentication scheme, the host event broker must be
+     * properly configured for TLS/SSL connections, and Client Certificate Verification must be
+     * enabled for the particular Message VPN that the client is connecting to. On client side client
+     * certificate needs to be present in a keystore file.
+     *
+     * @param myKeystorePassword password for the keystore
+     * @param myKeystoreUrl      url to the keystore file
+     * @return configured and connected instance of {@code MessagingService} ready to be used for
+     * messaging tasks
+     */
+    public static MessagingService configureClientCertificateAuthenticationCustomizeAllSettings(
+            String myKeystorePassword, String myKeystoreUrl) {
 
-  /**
-   * Example how to configure service access to use OIDC authentication with an ID token and
-   * optional access token
-   *
-   * @param idToken     ID token
-   * @param accessToken access token
-   * @return configured and connected instance of {@code MessagingService} ready to be used for
-   * messaging tasks
-   */
-  public static MessagingService configureOIDCAwithIdTokenuthentication(String idToken,
-      String accessToken) {
-    return MessagingService.builder(ConfigurationProfile.V1).local()
-        .withAuthenticationStrategy(OAuth2.of(accessToken, idToken))
-        .build().connect();
-  }
+        return MessagingService.builder(ConfigurationProfile.V1).localTLS(55443)
+                // transport security TLS is REQUIRED
+                .withTransportSecurityStrategy(TLS.create())
+                // can configure or override authentication manually
+                .withAuthenticationStrategy(
+                        // jaasLoginContextName correlates to the entry in resources/jaas.conf file
+                        // myUserNameOnBroker should be setup on a broker, or just use null
+                        ClientCertificateAuthentication
+                                .of(myKeystoreUrl, myKeystorePassword)
+                )
+                .build().connect();
+    }
 
-  /**
-   * Example how to update an expiring OAUTH2 (access or/and ID) tokens.
-   * <p>User is in charge to obtain a new valid token in order to use this API
-   * <p>Update won't take in effect instantly but upper next reconnection
-   *
-   * @param service        connected or disconnected service with at least one outstanding
-   *                       reconnection attempt
-   * @param newAccessToken new access token
-   * @param newOidcIdToken new ID token
-   * @throws IllegalArgumentException  when new token is null
-   * @throws PubSubPlusClientException If other transport or communication related errors occur
-   */
-  public void updateOauth2Token(MessagingService service, String newAccessToken,
-      String newOidcIdToken)
-      throws IllegalArgumentException, PubSubPlusClientException {
+    /**
+     * For a client to use a client certificate authentication scheme, the host event broker must be
+     * properly configured for TLS/SSL connections, and Client Certificate Verification must be
+     * enabled for the particular Message VPN that the client is connecting to. On client side client
+     * certificate needs to be present in a keystore file.
+     *
+     * @param myKeystorePassword           password for the keystore
+     * @param myEspecialPrivateKeyPassword password for the private key stored in a keystore if a
+     *                                     different from a {@code myKeystorePassword} password is
+     *                                     used
+     * @param myKeystoreUrl                url to the keystore file
+     * @return configured and connected instance of {@code MessagingService} ready to be used for
+     * messaging tasks
+     */
+    public static MessagingService configureClientCertificateAuthenticationCustomizeAllSettings(
+            String myKeystorePassword, String myEspecialPrivateKeyPassword, String myKeystoreUrl) {
+
+        return MessagingService.builder(ConfigurationProfile.V1).localTLS(55443)
+                // transport security TLS is REQUIRED
+                .withTransportSecurityStrategy(TLS.create())
+                // can configure or override authentication manually
+                .withAuthenticationStrategy(
+                        // jaasLoginContextName correlates to the entry in resources/jaas.conf file
+                        // myUserNameOnBroker should be setup on a broker
+                        ClientCertificateAuthentication
+                                .of(myKeystoreUrl, myKeystorePassword, SecureStoreFormat.PKCS12)
+                                .withPrivateKeyPassword(myEspecialPrivateKeyPassword)
+                )
+                .build().connect();
+    }
+
+
+    /**
+     * Example how to configure service access to use OAuth 2 authentication with an access token and
+     * an optional issuer identifier
+     *
+     * @param accessToken      access token
+     * @param issuerIdentifier Issuer identifier URI
+     * @return configured and connected instance of {@code MessagingService} ready to be used for
+     * messaging tasks
+     */
+    public static MessagingService configureOauth2WithAccessTokenAuthentication(String accessToken,
+                                                                                String issuerIdentifier) {
+        return MessagingService.builder(ConfigurationProfile.V1).local()
+                .withAuthenticationStrategy(OAuth2.of(accessToken).withIssuerIdentifier(issuerIdentifier))
+                .build().connect();
+    }
+
+    /**
+     * Example how to configure service access to use OIDC authentication with an ID token and
+     * optional access token
+     *
+     * @param idToken     ID token
+     * @param accessToken access token
+     * @return configured and connected instance of {@code MessagingService} ready to be used for
+     * messaging tasks
+     */
+    public static MessagingService configureOIDCAwithIdTokenuthentication(String idToken,
+                                                                          String accessToken) {
+        return MessagingService.builder(ConfigurationProfile.V1).local()
+                .withAuthenticationStrategy(OAuth2.of(accessToken, idToken))
+                .build().connect();
+    }
+
+    /**
+     * Example how to update an expiring OAUTH2 (access or/and ID) tokens.
+     * <p>User is in charge to obtain a new valid token in order to use this API
+     * <p>Update won't take in effect instantly but on next reconnection
+     *
+     * @param service connected or disconnected service with at least one outstanding
+     *                reconnection attempt
+     * @throws IllegalArgumentException  when new token is null
+     * @throws PubSubPlusClientException If other transport or communication related errors occur
+     */
+    public void updateOauth2Token(MessagingService service, String issuerId)
+            throws IllegalArgumentException, PubSubPlusClientException, Exception {
 // The new access token is going to be used for authentication to the broker after broker disconnects a client (i.e due to old token expiration).
 // this token update happens during the next service reconnection attempt.
 // There will be no way to signal to the user if new token is valid. When the new token is not valid,
 // then reconnection will be retried for the remaining number of times or forever if configured so.
 // Usage of ServiceInterruptionListener and accompanied exceptions if any can be used to determine if token update during next reconnection was successful.
-    service.updateProperty(AuthenticationProperties.SCHEME_OAUTH2_ACCESS_TOKEN, newAccessToken);
-    service.updateProperty(AuthenticationProperties.SCHEME_OAUTH2_OIDC_ID_TOKEN, newOidcIdToken);
-  }
+        service.updateProperty(AuthenticationProperties.SCHEME_OAUTH2_ACCESS_TOKEN, getNewOAuthAccessToken(issuerId));
+        service.updateProperty(AuthenticationProperties.SCHEME_OAUTH2_OIDC_ID_TOKEN, getNewOidcIdToken(issuerId));
+    }
 
+    private String getNewOAuthAccessToken(String issuerId) throws Exception {
+        String newAccessToken = fetchNewAccessToken();
+        if (newAccessToken == null) {
+            throw new Exception("Failed to refresh OAuth token");
+        }
+        if (!validateTokenClaims(newAccessToken, issuerId)) {
+            throw new Exception("OAuth Token validation failed");
+        }
+        return newAccessToken;
+    }
+    private String getNewOidcIdToken(String issuerId) throws Exception {
+        String newIdToken = fetchNewOidcIdToken();
+        if (newIdToken == null || newIdToken == null) {
+            throw new Exception("Failed to refresh OIDC token");
+        }
+        if (!validateTokenClaims(newIdToken, issuerId)) {
+            throw new Exception("OIDC Token validation failed");
+        }
+        return newIdToken;
+    }
+    private String fetchNewAccessToken() {
+        // Simulate API call to identity provider to refresh access token
+        return "newAccessTokenFromIDP";
+    }
+    private String fetchNewOidcIdToken() {
+        // Simulate API call to identity provider to refresh ID token
+        return "newIDTokenFromIDP";
+    }
+    private boolean validateTokenClaims(String token, String expectedIssuer) {
+        boolean isTokenExpired = isTokenExpired(token);
+        boolean isIssuerValid = isIssuerValid(token, expectedIssuer);
+        boolean isAudienceValid = isAudienceValid(token);
+
+        if (!isTokenExpired && isIssuerValid && isAudienceValid) {
+
+            return true;
+        } else {
+            return false;
+        }
+    }
+    private boolean isTokenExpired(String token) {
+        // Simulate checking expiration (use a real JWT parser to check expiration claim)
+        Instant now = Instant.now();
+        Instant expirationTime = Instant.now().plusSeconds(3600); // Simulated expiration
+        return now.isAfter(expirationTime);
+    }
+    private boolean isIssuerValid(String token, String expectedIssuer) {
+        // Simulate checking issuer claim
+        String issuer = "https://example.com"; // Simulated issuer
+        return expectedIssuer.equals(issuer);
+    }
+    private boolean isAudienceValid(String token) {
+        // Simulate checking audience claim
+        String audience = "your-audience"; // Simulated audience
+        return "your-audience".equals(audience);
+    }
 }
