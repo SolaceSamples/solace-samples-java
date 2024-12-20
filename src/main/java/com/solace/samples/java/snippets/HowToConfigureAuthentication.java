@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2023 Solace Corporation. All rights reserved.
+ * Copyright 2021-2024 Solace Corporation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -236,7 +236,7 @@ public class HowToConfigureAuthentication {
     }
     private String getNewOidcIdToken(String issuerId) throws Exception {
         String newIdToken = fetchNewOidcIdToken();
-        if (newIdToken == null || newIdToken == null) {
+        if (newIdToken == null) {
             throw new Exception("Failed to refresh OIDC token");
         }
         if (!validateTokenClaims(newIdToken, issuerId)) {
