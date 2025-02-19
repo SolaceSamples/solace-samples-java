@@ -59,9 +59,9 @@ dependencies {
     implementation group: 'org.apache.logging.log4j', name: 'log4j-jcl', version: '2.+'
 
     // Distributed Tracing Dependency on OpenTelemetry and Solace PubSub+ OpenTelemetry Java Integration
-    implementation group: 'com.solace', name: 'pubsubplus-opentelemetry-java-integration', version: '1.+'
-    implementation group: 'io.opentelemetry', name: 'opentelemetry-exporter-otlp', version: '1.+'
-    implementation group: 'io.opentelemetry.semconv', name: 'opentelemetry-semconv', version: '1.+'
+    implementation group: 'com.solace', name: 'pubsubplus-opentelemetry-java-integration', version: '1.0.+'
+    implementation group: 'io.opentelemetry', name: 'opentelemetry-exporter-otlp', version: '1.47.+'
+    implementation group: 'io.opentelemetry.semconv', name: 'opentelemetry-semconv', version: '1.29.+'
 }
 
 
